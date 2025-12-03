@@ -73,8 +73,8 @@ jobs:
 
       - name: Custom packages
         run: |
-          chmod +x /scripts/lede/packages.sh
-          chmod +x /scripts/lede/handles.sh
+          chmod +x $GITHUB_WORKSPACE/scripts/lede/packages.sh
+          chmod +x $GITHUB_WORKSPACE/scripts/lede/handles.sh
           cd openwrt/package/
           $GITHUB_WORKSPACE/scripts/lede/packages.sh
           $GITHUB_WORKSPACE/scripts/lede/handles.sh
@@ -83,7 +83,7 @@ jobs:
         run: |
           [ -e files ] && mv files openwrt/files
           [ -e $LEDE_CONFIG ] && mv $LEDE_CONFIG openwrt/.config
-           chmod +x /scripts/lede/settings.sh
+           chmod +x $GITHUB_WORKSPACE/scripts/lede/settings.sh
           cd openwrt
           $GITHUB_WORKSPACE/scripts/lede/settings.sh
 
