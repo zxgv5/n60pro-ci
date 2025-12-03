@@ -61,6 +61,10 @@ jobs:
           git clone $LEDE_REPO -b $LEDE_BRANCH openwrt
           ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
+      - name: Check scripts
+        run: |
+          find ./ -maxdepth 3 -type f -iregex ".*\(txt\|sh\)$" -exec dos2unix {} \; -exec chmod +x {} \;
+
       - name: Update feeds
         run: cd openwrt && ./scripts/feeds update -a
 
