@@ -47,13 +47,10 @@ jobs:
           sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
           sudo docker image prune --all --force
           sudo -E apt -yqq update
-          sudo -E apt -yqq install ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler dos2unix flex gawk
-          sudo -E apt -yqq gcc-multilib g++-multilib gettext genisoimage git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libfuse-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev
-          sudo -E apt -yqq libmpfr-dev libncurses5-dev libncursesw5-dev libpython3-dev libreadline-dev libssl-dev libtool llvm lrzsz msmtp ninja-build p7zip p7zip-full patch pkgconf
-          sudo -E apt -yqq python3 python3-pyelftools python3-setuptools qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev
+          sudo -E apt -yqq install ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler dos2unix flex gawk gcc-multilib g++-multilib gettext genisoimage git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libfuse-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libpython3-dev libreadline-dev libssl-dev libtool llvm lrzsz msmtp ninja-build p7zip p7zip-full patch pkgconf python3 python3-pyelftools python3-setuptools qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev
           sudo -E apt -yqq autoremove --purge
           sudo -E apt -yqq clean
-          # Êµ¼ÊÉÏ£¬ÓÃÏÂÃæÕâĞĞ¿ÉÒÔÌæ´úÉÏÃæºÃ¼¸ĞĞµÄ¹¤×÷
+          # å®é™…ä¸Šï¼Œç”¨ä¸‹é¢è¿™è¡Œå¯ä»¥æ›¿ä»£ä¸Šé¢çš„ä¸€äº›å·¥ä½œ
           # sudo bash -c 'bash <(curl -sL https://build-scripts.immortalwrt.org/init_build_environment.sh)'
           sudo timedatectl set-timezone "$LEDE_TIME_ZONE"
           sudo mkdir -p /workdir
@@ -68,9 +65,9 @@ jobs:
 
       - name: Check scripts
         run: |
-          # Îªsh½Å±¾¸³Óè¿ÉÖ´ĞĞÈ¨ÏŞ
-          #find ./ -maxdepth 4 -type f -iregex ".*\(txt\|sh\)$" -exec dos2unix {} \; -exec chmod +x {} \;
-          #find ./ -maxdepth 4 -type f -iregex ".*\(sh\)$" -exec dos2unix {} \; -exec chmod +x {} \;
+          # ä¸ºshè„šæœ¬èµ‹äºˆå¯æ‰§è¡Œæƒé™
+          # find ./ -maxdepth 4 -type f -iregex ".*\(txt\|sh\)$" -exec dos2unix {} \; -exec chmod +x {} \;
+          # find ./ -maxdepth 4 -type f -iregex ".*\(sh\)$" -exec dos2unix {} \; -exec chmod +x {} \;
           find ./ -maxdepth 4 -type f -name "*.sh" -exec dos2unix {} \; -exec chmod +x {} \;
 
       - name: Update feeds
@@ -81,7 +78,7 @@ jobs:
 
       - name: Custom packages
         run: |
-          # Check scriptsÖĞÒÑÊÚÈ¨£¬¹Ê×¢ÊÍµôÏÂÃæÁ½ĞĞ
+          # Check scriptsä¸­å·²æˆæƒï¼Œæ•…æ³¨é‡Šæ‰ä¸‹é¢ä¸¤è¡Œ
           # chmod +x $GITHUB_WORKSPACE/scripts/lede/packages.sh
           # chmod +x $GITHUB_WORKSPACE/scripts/lede/handles.sh
           cd openwrt/package/
@@ -92,7 +89,7 @@ jobs:
         run: |
           [ -e files ] && mv files openwrt/files
           [ -e $LEDE_CONFIG ] && mv $LEDE_CONFIG openwrt/.config
-          # Check scriptsÖĞÒÑÊÚÈ¨£¬¹Ê×¢ÊÍµôÏÂÃæÒ»ĞĞ
+          # Check scriptsä¸­å·²æˆæƒï¼Œæ•…æ³¨é‡Šæ‰ä¸‹é¢ä¸¤è¡Œ
           # chmod +x $GITHUB_WORKSPACE/scripts/lede/settings.sh
           cd openwrt
           $GITHUB_WORKSPACE/scripts/lede/settings.sh
