@@ -46,10 +46,15 @@ jobs:
         run: |
           sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
           sudo docker image prune --all --force
-          sudo -E apt-get -qq update
-          sudo -E apt-get -qq install ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler flex gawk gcc-multilib g++-multilib gettext genisoimage git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libfuse-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libpython3-dev libreadline-dev libssl-dev libtool llvm lrzsz msmtp ninja-build p7zip p7zip-full patch pkgconf python3 python3-pyelftools python3-setuptools qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev
-          sudo -E apt-get -qq autoremove --purge
-          sudo -E apt-get -qq clean
+          sudo -E apt -yqq update
+          sudo -E apt -yqq install ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler dos2unix flex gawk
+          sudo -E apt -yqq gcc-multilib g++-multilib gettext genisoimage git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libfuse-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev
+          sudo -E apt -yqq libmpfr-dev libncurses5-dev libncursesw5-dev libpython3-dev libreadline-dev libssl-dev libtool llvm lrzsz msmtp ninja-build p7zip p7zip-full patch pkgconf
+          sudo -E apt -yqq python3 python3-pyelftools python3-setuptools qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev
+          sudo -E apt -yqq autoremove --purge
+          sudo -E apt -yqq clean
+          # 实际上，用下面这行可以替代上面好几行的工作
+          # sudo bash -c 'bash <(curl -sL https://build-scripts.immortalwrt.org/init_build_environment.sh)'
           sudo timedatectl set-timezone "$LEDE_TIME_ZONE"
           sudo mkdir -p /workdir
           sudo chown $USER:$GROUPS /workdir
@@ -61,9 +66,12 @@ jobs:
           git clone $LEDE_REPO -b $LEDE_BRANCH openwrt
           ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
-      #- name: Check scripts
-      #  run: |
-      #    find ./ -maxdepth 3 -type f -iregex ".*\(txt\|sh\)$" -exec dos2unix {} \; -exec chmod +x {} \;
+      - name: Check scripts
+        run: |
+          # 为sh脚本赋予可执行权限
+          #find ./ -maxdepth 4 -type f -iregex ".*\(txt\|sh\)$" -exec dos2unix {} \; -exec chmod +x {} \;
+          #find ./ -maxdepth 4 -type f -iregex ".*\(sh\)$" -exec dos2unix {} \; -exec chmod +x {} \;
+          find ./ -maxdepth 4 -type f -name "*.sh" -exec dos2unix {} \; -exec chmod +x {} \;
 
       - name: Update feeds
         run: cd openwrt && ./scripts/feeds update -a
@@ -73,8 +81,9 @@ jobs:
 
       - name: Custom packages
         run: |
-          chmod +x $GITHUB_WORKSPACE/scripts/lede/packages.sh
-          chmod +x $GITHUB_WORKSPACE/scripts/lede/handles.sh
+          # Check scripts中已授权，故注释掉下面两行
+          # chmod +x $GITHUB_WORKSPACE/scripts/lede/packages.sh
+          # chmod +x $GITHUB_WORKSPACE/scripts/lede/handles.sh
           cd openwrt/package/
           $GITHUB_WORKSPACE/scripts/lede/packages.sh
           $GITHUB_WORKSPACE/scripts/lede/handles.sh
@@ -83,7 +92,8 @@ jobs:
         run: |
           [ -e files ] && mv files openwrt/files
           [ -e $LEDE_CONFIG ] && mv $LEDE_CONFIG openwrt/.config
-           chmod +x $GITHUB_WORKSPACE/scripts/lede/settings.sh
+          # Check scripts中已授权，故注释掉下面一行
+          # chmod +x $GITHUB_WORKSPACE/scripts/lede/settings.sh
           cd openwrt
           $GITHUB_WORKSPACE/scripts/lede/settings.sh
 
