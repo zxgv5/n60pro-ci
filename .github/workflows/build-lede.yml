@@ -82,7 +82,7 @@ jobs:
           # chmod +x $GITHUB_WORKSPACE/scripts/lede/packages.sh
           # chmod +x $GITHUB_WORKSPACE/scripts/lede/handles.sh
           cd openwrt/package/
-          $GITHUB_WORKSPACE/scripts/lede/packages.sh
+          # $GITHUB_WORKSPACE/scripts/lede/packages.sh
           $GITHUB_WORKSPACE/scripts/lede/handles.sh
 
       - name: Load custom configuration

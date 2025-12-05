@@ -19,23 +19,18 @@ sed -i "/attendedsysupgrade/d" $(find ./feeds/luci/collections/ -type f -name "M
 #修改immortalwrt.lan关联IP
 sed -i "s/192\.168\.[0-9]*\.[0-9]*/$LEDE_IP/g" $(find ./feeds/luci/modules/luci-mod-system/ -type f -name "flash.js")
 
-#WIFI_FILE="./package/mtk/applications/mtwifi-cfg/files/mtwifi.sh"
 WIFI_FILE="./package/kernel/mac80211/files/lib/wifi/mac80211.sh"
 
 #修改WIFI名称
 sed -i "s/LEDE/$LEDE_SSID/g" $WIFI_FILE
 #修改WIFI加密
-sed -i "s/encryption=.*/encryption='psk2+ccmp'/g" $WIFI_FILE
+#sed -i "s/encryption=.*/encryption='psk2+ccmp'/g" $WIFI_FILE
 
 CFG_FILE="./package/base-files/files/bin/config_generate"
 #修改默认IP地址
 sed -i "s/192\.168\.[0-9]*\.[0-9]*/$LEDE_IP/g" $CFG_FILE
 #修改默认主机名
 sed -i "s/hostname='.*'/hostname='$LEDE_NAME'/g" $CFG_FILE
-
-#配置文件修改
-echo "CONFIG_PACKAGE_luci=y" >> ./.config
-echo "CONFIG_LUCI_LANG_zh_Hans=y" >> ./.config
 
 #添加wireguard防火墙规则
 cat >> ./package/network/config/firewall/files/firewall.config <<EOF
