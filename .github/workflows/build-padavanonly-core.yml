@@ -1,0 +1,259 @@
+name: build-padavanonly-core
+
+on:
+  workflow_call:
+    inputs:
+      PADAVANONLY_CONFIG:
+        required: true
+        type: string
+      PADAVANONLY_THEME:
+        required: true
+        type: string
+      PADAVANONLY_NAME:
+        required: true
+        type: string
+      PADAVANONLY_SSID:
+        required: true
+        type: string
+      PADAVANONLY_WORD:
+        required: true
+        type: string
+      PADAVANONLY_IP:
+        required: true
+        type: string
+      PADAVANONLY_PW:
+        required: true
+        type: string
+      PADAVANONLY_REPO:
+        required: true
+        type: string
+      PADAVANONLY_BRANCH:
+        required: true
+        type: string
+      PADAVANONLY_SOURCE:
+        required: true
+        type: string
+      PADAVANONLY_PACKAGE:
+        required: false
+        type: string
+
+env:
+  GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+  PADAVANONLY_CONFIG: ${{inputs.PADAVANONLY_CONFIG}}
+  PADAVANONLY_THEME: ${{inputs.PADAVANONLY_THEME}}
+  PADAVANONLY_NAME: ${{inputs.PADAVANONLY_NAME}}
+  PADAVANONLY_SSID: ${{inputs.PADAVANONLY_SSID}}
+  PADAVANONLY_WORD: ${{inputs.PADAVANONLY_WORD}}
+  PADAVANONLY_IP: ${{inputs.PADAVANONLY_IP}}
+  PADAVANONLY_PW: ${{inputs.PADAVANONLY_PW}}
+  PADAVANONLY_REPO: ${{inputs.PADAVANONLY_REPO}}
+  PADAVANONLY_BRANCH: ${{inputs.PADAVANONLY_BRANCH}}
+  PADAVANONLY_SOURCE: ${{inputs.PADAVANONLY_SOURCE}}
+  PADAVANONLY_PACKAGE: ${{inputs.PADAVANONLY_PACKAGE}}
+
+jobs:
+  core:
+    name: ${{inputs.PADAVANONLY_SOURCE}}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Free disk space ubuntu-latest
+        uses: BRAINSia/free-disk-space@v2
+        with:
+          tool-cache: false
+          mandb:   true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
+      - name: Checkout projects
+        uses: actions/checkout@main
+
+      - name: Initialization environment
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo -E apt -yqq purge firefox
+          sudo -E apt -yqq update
+          sudo -E apt -yqq full-upgrade
+          sudo -E apt -yqq autoremove --purge
+          sudo -E apt -yqq autoclean
+          sudo -E apt -yqq clean
+          sudo -E apt -yqq install dos2unix python3-netifaces libfuse-dev
+          sudo bash -c 'bash <(curl -sL https://build-scripts.immortalwrt.org/init_build_environment.sh)'
+          sudo -E systemctl daemon-reload
+          sudo -E timedatectl set-timezone "Asia/Shanghai"
+
+          sudo mkdir -p /mnt/build_wrt
+          sudo chown $USER:$USER /mnt/build_wrt
+          sudo ln -s /mnt/build_wrt $GITHUB_WORKSPACE/wrt
+
+      - name: Initialization values
+        run: |
+          echo "PADAVANONLY_DATE=$(TZ=UTC-8 date +"%y.%m.%d-%H.%M.%S")" >> $GITHUB_ENV
+          echo "PADAVANONLY_MARK=${GITHUB_REPOSITORY%%/*}" >> $GITHUB_ENV
+          echo "PADAVANONLY_INFO=${PADAVANONLY_SOURCE%%/*}" >> $GITHUB_ENV
+          echo "PADAVANONLY_TARGET=$(grep -m 1 -oP '^CONFIG_TARGET_\K[\w]+(?=\=y)' ./config/padavanonly/padavanonly.conf)" >> $GITHUB_ENV
+          echo "PADAVANONLY_KVER=none" >> $GITHUB_ENV
+          echo "PADAVANONLY_LIST=none" >> $GITHUB_ENV
+
+      - name: Clone code
+        run: |
+          git clone --depth=1 --single-branch --branch $PADAVANONLY_BRANCH $PADAVANONLY_REPO ./wrt/
+
+          cd ./wrt/ && echo "PADAVANONLY_HASH=$(git log -1 --pretty=format:'%h')" >> $GITHUB_ENV
+
+          # 如果不存在 defconfig 则直接结束工作流
+          if [ ! -d "defconfig" ]; then
+            echo "defconfig directory not found, stopping workflow."
+            exit 0
+          fi
+
+          # GitHub Action 移除国内下载源
+          PROJECT_MIRRORS_FILE="./scripts/projectsmirrors.json"
+          if [ -f "$PROJECT_MIRRORS_FILE" ]; then
+            sed -i '/.cn\//d; /tencent/d; /aliyun/d' "$PROJECT_MIRRORS_FILE"
+          fi
+
+      - name: Check scripts
+        run: |
+          find ./ -maxdepth 4 -type f -iregex ".*\(txt\|sh\)$" -exec dos2unix {} \; -exec chmod +x {} \;
+
+      - name: Check caches
+        id: check-cache
+        uses: actions/cache@main
+        with:
+          key: ${{env.PADAVANONLY_CONFIG}}-${{env.PADAVANONLY_INFO}}-${{env.PADAVANONLY_HASH}}
+          restore-keys: ${{env.PADAVANONLY_CONFIG}}-${{env.PADAVANONLY_INFO}}
+          path: |
+            ./wrt/.ccache
+            ./wrt/staging_dir/host*
+            ./wrt/staging_dir/tool*
+
+      - name: Update caches
+        run: |
+          if [ -d "./wrt/staging_dir" ]; then
+            find "./wrt/staging_dir" -type d -name "stamp" -not -path "*target*" | while read -r DIR; do
+              find "$DIR" -type f -exec touch {} +
+            done
+
+            mkdir -p ./wrt/tmp && echo "1" > ./wrt/tmp/.build
+
+            echo "toolchain skiped done!"
+          else
+            echo "caches missed!"
+          fi
+
+          if ${{steps.check-cache.outputs.cache-hit != 'true'}}; then
+            CACHE_LIST=$(gh cache list --key "$PADAVANONLY_CONFIG-$PADAVANONLY_INFO" | cut -f 1)
+            for CACHE_KEY in $CACHE_LIST; do
+              gh cache delete $CACHE_KEY
+            done
+
+            echo "caches cleanup done!"
+          fi
+
+      - name: Update feeds
+        run: |
+          cd ./wrt/
+
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: Custom packages
+        run: |
+          cd ./wrt/package/
+
+          $GITHUB_WORKSPACE/scripts/padavanonly/packages.sh
+          $GITHUB_WORKSPACE/scripts/padavanonly/handles.sh
+
+      - name: Custom settings
+        run: |
+          cd ./wrt/
+
+          cat $GITHUB_WORKSPACE/config/padavanonly/padavanonly.conf >> .config
+
+          $GITHUB_WORKSPACE/scripts/padavanonly/settings.sh
+
+          make defconfig -j$(nproc) && make clean -j$(nproc)
+
+      - name: Download packages
+        run: |
+          cd ./wrt/
+
+          make download -j$(nproc)
+
+      - name: Check disk space before compile firmware
+        run: |
+          echo "=== Disk Space Before Compile Firmware ==="
+          df -h
+
+      - name: Compile firmware
+        run: |
+          cd ./wrt/
+
+          make -j$(nproc) || make -j1 V=s
+
+      - name: Machine information
+        run: |
+          cd ./wrt/
+
+          echo "======================="
+          lscpu | grep -E "name|Core|Thread"
+          echo "======================="
+          df -h
+          echo "======================="
+          du -h --max-depth=1
+          echo "======================="
+
+      - name: Package firmware
+        run: |
+          cd ./wrt/ && mkdir ./upload/
+
+          cp -f ./.config ./upload/Config-"$PADAVANONLY_CONFIG"-"$PADAVANONLY_INFO"-"$PADAVANONLY_BRANCH"-"$PADAVANONLY_DATE".txt
+
+          echo "PADAVANONLY_KVER=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^kernel - \K[\d\.]+' {} \;)" >> $GITHUB_ENV
+          echo "PADAVANONLY_LIST=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^luci-(app|theme)[^ ]*' {} \; | tr '\n' ' ')" >> $GITHUB_ENV
+          find ./bin/targets/ -iregex ".*\(buildinfo\|json\|sha256sums\|packages\)$" -exec rm -rf {} +
+          for FILE in $(find ./bin/targets/ -type f -iname "*$PADAVANONLY_TARGET*") ; do
+            EXT=$(basename $FILE | cut -d '.' -f 2-)
+            NAME=$(basename $FILE | cut -d '.' -f 1 | grep -io "\($PADAVANONLY_TARGET\).*")
+            NEW_FILE="$PADAVANONLY_INFO"-"$PADAVANONLY_BRANCH"-"$NAME"-"$PADAVANONLY_DATE"."$EXT"
+            mv -f $FILE ./upload/$NEW_FILE
+          done
+          find ./bin/targets/ -type f -exec mv -f {} ./upload/ \;
+          make clean -j$(nproc)
+
+      #   将生成的固件暂存到Artifact中，并保留30天，避免因GitHub Release上传失败而丢失固件
+      # - name: Upload Firmware As Artifact
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: firmware-${{ env.PADAVANONLY_CONFIG }}-${{ env.PADAVANONLY_INFO }}-${{ env.PADAVANONLY_BRANCH }}-${{ env.PADAVANONLY_DATE }}
+      #     path: ./wrt/upload/
+      #     retention-days: 90
+        
+      - name: Release firmware
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{env.PADAVANONLY_CONFIG}}-${{env.PADAVANONLY_INFO}}-${{env.PADAVANONLY_BRANCH}}-${{env.PADAVANONLY_DATE}}
+          files: ./wrt/upload/*.*
+          body: |
+            支持闭源硬件加速
+            
+            源码：${{env.PADAVANONLY_REPO}}
+            分支：${{env.PADAVANONLY_BRANCH}}
+            提交：${{env.PADAVANONLY_HASH}}
+
+            配置：${{env.PADAVANONLY_CONFIG}}
+            平台：${{env.PADAVANONLY_TARGET}}
+
+            登录地址：${{env.PADAVANONLY_IP}}
+            登录密码：${{env.PADAVANONLY_PW}}
+
+            WIFI名称：${{env.PADAVANONLY_SSID}}
+            WIFI密码：${{env.PADAVANONLY_WORD}}
+
+            内核版本：${{env.PADAVANONLY_KVER}}
+            插件列表：${{env.PADAVANONLY_LIST}}
