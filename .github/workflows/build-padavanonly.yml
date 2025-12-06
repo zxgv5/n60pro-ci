@@ -16,21 +16,7 @@ permissions: write-all
 
 #CI任务
 jobs:
-  cleanup:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Delete old releases and workflows
-        uses: ophub/delete-releases-workflows@main
-        with:
-          gh_token: ${{secrets.GITHUB_TOKEN}}
-          delete_releases: true
-          releases_keep_latest: 0
-          delete_tags: true
-          delete_workflows: true
-          workflows_keep_day: 0
-
   config:
-    needs: cleanup
     name: ${{matrix.CONFIG}}
     strategy:
       fail-fast: false
