@@ -1,4 +1,4 @@
-name: clean-all
+name: clean-workflows
 
 on:
   workflow_dispatch:

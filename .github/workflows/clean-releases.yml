@@ -1,4 +1,4 @@
-name: clean-all
+name: clean-releases
 
 on:
   workflow_dispatch:

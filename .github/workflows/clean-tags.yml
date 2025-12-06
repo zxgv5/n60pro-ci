@@ -1,4 +1,4 @@
-name: clean-all
+name: clean-tags
 
 on:
   workflow_dispatch:
