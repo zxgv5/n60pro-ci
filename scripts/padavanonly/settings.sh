@@ -35,7 +35,8 @@ if [ -n "$PADAVANONLY_PACKAGE" ]; then
 fi
 
 #添加wireguard防火墙规则
-cat >> ./package/network/config/firewall/files/firewall.config <<EOF
+FIREWALL_FILE="./package/network/config/firewall/files/firewall.config"
+cat >> $FIREWALL_FILE <<EOF
 config rule
 	option name 'Allow-Wireguard-Inbound'
 	option src '*'
