@@ -22,8 +22,8 @@ jobs:
           delete_workflows: true
           workflows_keep_day: 0
 
-      #- name: Checkout projects
-      #  uses: actions/checkout@main
+      - name: Checkout projects
+        uses: actions/checkout@main
 
-      #- name: Clean cache
-      #  run: gh cache delete --all
+      - name: Clean cache
+        run: gh cache delete --all
