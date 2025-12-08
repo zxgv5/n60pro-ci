@@ -31,16 +31,16 @@ echo "CONFIG_PACKAGE_luci-app-$PADAVANONLY_THEME-config=y" >> ./.config
 
 #手动调整的插件
 if [ -n "$PADAVANONLY_PACKAGE" ]; then
-	echo -e "$PADAVANONLY_PACKAGE" >> ./.config
+    echo -e "$PADAVANONLY_PACKAGE" >> ./.config
 fi
 
 #添加wireguard防火墙规则
 FIREWALL_FILE="./package/network/config/firewall/files/firewall.config"
 cat >> $FIREWALL_FILE <<EOF
 config rule
-	option name 'Allow-Wireguard-Inbound'
-	option src '*'
-	list proto 'udp'
-	option dest_port '52077'
-	option target 'ACCEPT'
+    option name 'Allow-Wireguard-Inbound'
+    option src '*'
+    list proto 'udp'
+    option dest_port '52077'
+    option target 'ACCEPT'
 EOF

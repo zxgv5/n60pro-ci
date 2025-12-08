@@ -23,7 +23,10 @@ jobs:
       matrix:
         CONFIG: [MT7986]
         REPO_INFO:
-          - {SOURCE: "padavanonly/immortalwrt-mt798x-6.6", BRANCH: "openwrt-24.10-6.6"}
+          - {
+              SOURCE: "padavanonly/immortalwrt-mt798x-6.6",
+              BRANCH: "openwrt-24.10-6.6",
+            }
 
     #调用公用编译核心WRT-CORE.yml
     uses: ./.github/workflows/build-padavanonly-core.yml
@@ -42,6 +45,8 @@ jobs:
       PADAVANONLY_IP: 192.168.10.1
       #默认密码，仅作提示，修改无用
       PADAVANONLY_PW: 无
+      #tag名
+      PADAVANONLY_TAG: padavanonly
       #源码链接
       PADAVANONLY_REPO: https://github.com/${{matrix.REPO_INFO.SOURCE}}.git
       #源码分支

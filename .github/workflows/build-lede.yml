@@ -11,7 +11,7 @@ env:
   LEDE_NAME: n60pro
   LEDE_IP: 192.168.10.1
   LEDE_SSID: 778v5
-  LEDE_FIRMWARE_TAG: LEDE
+  LEDE_FIRMWARE_TAG: lede
   LEDE_UPLOAD_FIRMWARE: true
   LEDE_UPLOAD_RELEASE: true
   LEDE_UPLOAD_BIN_DIR: false
@@ -23,14 +23,14 @@ jobs:
 
     steps:
       - name: Free disk space
-        uses: BRAINSia/free-disk-space@v2
+        uses: BRAINSia/free-disk-space@main
         with:
           # this might remove tools that are actually needed,
           # if set to "true" but frees about 6 GB
           tool-cache: false
           # all of these default to true, but feel free to set to
           # "false" if necessary for your workflow
-          mandb:   true
+          mandb: true
           android: true
           dotnet: true
           haskell: true
@@ -56,6 +56,11 @@ jobs:
           sudo timedatectl set-timezone "$TIME_ZONE"
           sudo mkdir -p /workdir
           sudo chown $USER:$GROUPS /workdir
+
+      - name: Initialization values
+        run: |
+          echo "LEDE_KVER=none" >> $GITHUB_ENV
+          echo "LEDE_LIST=none" >> $GITHUB_ENV
 
       - name: Clone source code
         working-directory: /workdir
@@ -100,7 +105,7 @@ jobs:
         run: |
           cd openwrt
           make defconfig
-          make download -j8
+          make download -j$(nproc)
           find dl -size -1024c -exec ls -l {} \;
           find dl -size -1024c -exec rm -f {} \;
 
@@ -130,6 +135,8 @@ jobs:
         run: |
           cd openwrt/bin/targets/*/*
           rm -rf packages
+          echo "LEDE_KVER=$(find openwrt/bin/targets/ -type f -name "*.manifest" -exec grep -oP '^kernel - \K[\d\.]+' {} \;)" >> $GITHUB_ENV
+          echo "LEDE_LIST=$(find openwrt/bin/targets/ -type f -name "*.manifest" -exec grep -oP '^luci-(app|theme)[^ ]*' {} \; | tr '\n' ' ')" >> $GITHUB_ENV
           echo "FIRMWARE=$PWD" >> $GITHUB_ENV
           echo "status=success" >> $GITHUB_OUTPUT
 
@@ -144,7 +151,7 @@ jobs:
         id: tag
         if: env.LEDE_UPLOAD_RELEASE == 'true' && !cancelled()
         run: |
-          echo "release_tag=$(date +"%Y.%m.%d-%H%M")-${{ env.LEDE_FIRMWARE_TAG }}" >> $GITHUB_OUTPUT
+          echo "release_tag=$(TZ=UTC-8 date +"%Y.%m.%d-%H.%M.%S")-${{ env.LEDE_FIRMWARE_TAG }}" >> $GITHUB_OUTPUT
           touch release.txt
           [ ${UPLOAD_GOFILE} = true && ${{ steps.gofile.outputs.url }} ] && echo "?? [GoFile](${{ steps.gofile.outputs.url }})" >> release.txt
           echo "status=success" >> $GITHUB_OUTPUT
@@ -155,7 +162,16 @@ jobs:
         with:
           tag_name: ${{ steps.tag.outputs.release_tag }}
           body_path: release.txt
-          files: ${{ env.FIRMWARE }}/*
+          #files: ${{ env.FIRMWARE }}/*
+          files: |
+            ${{ env.FIRMWARE }}/openwrt-*.bin
+            ${{ env.FIRMWARE }}/openwrt-*.manifest
+          body: |
+            源码：${{env.LEDE_REPO}}
+            分支：${{env.LEDE_BRANCH}}
+
+            内核版本：${{env.LEDE_KVER}}
+            插件列表：${{env.LEDE_LIST}}
 
       #- name: Delete workflow runs
       #  uses: Mattraks/delete-workflow-runs@main

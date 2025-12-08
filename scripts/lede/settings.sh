@@ -35,9 +35,9 @@ sed -i "s/hostname='.*'/hostname='$LEDE_NAME'/g" $CFG_FILE
 #添加wireguard防火墙规则
 cat >> ./package/network/config/firewall/files/firewall.config <<EOF
 config rule
-	option name 'Allow-Wireguard-Inbound'
-	option src '*'
-	list proto 'udp'
-	option dest_port '52077'
-	option target 'ACCEPT'
+    option name 'Allow-Wireguard-Inbound'
+    option src '*'
+    list proto 'udp'
+    option dest_port '52077'
+    option target 'ACCEPT'
 EOF

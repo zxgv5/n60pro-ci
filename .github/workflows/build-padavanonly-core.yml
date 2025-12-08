@@ -24,6 +24,9 @@ on:
       PADAVANONLY_PW:
         required: true
         type: string
+      PADAVANONLY_TAG:
+        required: true
+        type: string
       PADAVANONLY_REPO:
         required: true
         type: string
@@ -46,6 +49,7 @@ env:
   PADAVANONLY_WORD: ${{inputs.PADAVANONLY_WORD}}
   PADAVANONLY_IP: ${{inputs.PADAVANONLY_IP}}
   PADAVANONLY_PW: ${{inputs.PADAVANONLY_PW}}
+  PADAVANONLY_TAG: ${{inputs.PADAVANONLY_TAG}}
   PADAVANONLY_REPO: ${{inputs.PADAVANONLY_REPO}}
   PADAVANONLY_BRANCH: ${{inputs.PADAVANONLY_BRANCH}}
   PADAVANONLY_SOURCE: ${{inputs.PADAVANONLY_SOURCE}}
@@ -57,10 +61,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Free disk space ubuntu-latest
-        uses: BRAINSia/free-disk-space@v2
+        uses: BRAINSia/free-disk-space@main
         with:
           tool-cache: false
-          mandb:   true
+          mandb: true
           android: true
           dotnet: true
           haskell: true
@@ -194,7 +198,7 @@ jobs:
         run: |
           cd ./wrt/
 
-          make -j$(nproc) || make -j1 V=s
+          make -j$(nproc) || make -j1 || make -j1 V=s
 
       - name: Machine information
         run: |
@@ -212,7 +216,7 @@ jobs:
         run: |
           cd ./wrt/ && mkdir ./upload/
 
-          cp -f ./.config ./upload/Config-"$PADAVANONLY_CONFIG"-"$PADAVANONLY_INFO"-"$PADAVANONLY_BRANCH"-"$PADAVANONLY_DATE".txt
+          cp -f ./.config ./upload/config-"$PADAVANONLY_CONFIG"-"$PADAVANONLY_INFO"-"$PADAVANONLY_BRANCH"-"$PADAVANONLY_DATE".txt
 
           echo "PADAVANONLY_KVER=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^kernel - \K[\d\.]+' {} \;)" >> $GITHUB_ENV
           echo "PADAVANONLY_LIST=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^luci-(app|theme)[^ ]*' {} \; | tr '\n' ' ')" >> $GITHUB_ENV
@@ -228,20 +232,23 @@ jobs:
 
       #   将生成的固件暂存到Artifact中，并保留30天，避免因GitHub Release上传失败而丢失固件
       # - name: Upload Firmware As Artifact
-      #   uses: actions/upload-artifact@v4
+      #   uses: actions/upload-artifact@main
       #   with:
       #     name: firmware-${{ env.PADAVANONLY_CONFIG }}-${{ env.PADAVANONLY_INFO }}-${{ env.PADAVANONLY_BRANCH }}-${{ env.PADAVANONLY_DATE }}
       #     path: ./wrt/upload/
       #     retention-days: 90
-        
+
       - name: Release firmware
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@master
         with:
-          tag_name: ${{env.PADAVANONLY_CONFIG}}-${{env.PADAVANONLY_INFO}}-${{env.PADAVANONLY_BRANCH}}-${{env.PADAVANONLY_DATE}}
-          files: ./wrt/upload/*.*
+          # tag_name: ${{env.PADAVANONLY_CONFIG}}-${{env.PADAVANONLY_INFO}}-${{env.PADAVANONLY_BRANCH}}-${{env.PADAVANONLY_DATE}}
+          tag_name: ${{env.PADAVANONLY_DATE}}-${{env.PADAVANONLY_TAG}}
+          # files: ./wrt/upload/*.*
+          files: |
+            ./wrt/upload/mt7986-ram-ddr4-bl2.bin
+            ./wrt/upload/padavanonly-openwrt-*.manifest
+            ./wrt/upload/padavanonly-openwrt-*.bin
           body: |
-            支持闭源硬件加速
-            
             源码：${{env.PADAVANONLY_REPO}}
             分支：${{env.PADAVANONLY_BRANCH}}
             提交：${{env.PADAVANONLY_HASH}}
