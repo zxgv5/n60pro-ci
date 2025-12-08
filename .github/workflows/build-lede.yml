@@ -151,7 +151,7 @@ jobs:
         id: tag
         if: env.LEDE_UPLOAD_RELEASE == 'true' && !cancelled()
         run: |
-          echo "release_tag=$(TZ=UTC-8 date +"%Y.%m.%d-%H.%M.%S")-${{ env.LEDE_FIRMWARE_TAG }}" >> $GITHUB_OUTPUT
+          echo "release_tag=$(TZ=UTC-8 date +"%y.%m.%d-%H.%M.%S")-${{ env.LEDE_FIRMWARE_TAG }}" >> $GITHUB_OUTPUT
           touch release.txt
           [ ${UPLOAD_GOFILE} = true && ${{ steps.gofile.outputs.url }} ] && echo "?? [GoFile](${{ steps.gofile.outputs.url }})" >> release.txt
           echo "status=success" >> $GITHUB_OUTPUT
@@ -161,8 +161,8 @@ jobs:
         if: steps.tag.outputs.status == 'success' && !cancelled()
         with:
           tag_name: ${{ steps.tag.outputs.release_tag }}
-          body_path: release.txt
-          #files: ${{ env.FIRMWARE }}/*
+          # body_path: release.txt
+          # files: ${{ env.FIRMWARE }}/*
           files: |
             ${{ env.FIRMWARE }}/openwrt-*.bin
             ${{ env.FIRMWARE }}/openwrt-*.manifest
