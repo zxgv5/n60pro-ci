@@ -61,11 +61,13 @@ jobs:
         run: |
           echo "LEDE_KVER=none" >> $GITHUB_ENV
           echo "LEDE_LIST=none" >> $GITHUB_ENV
+          # df -hT $FIRMWARE_PATH是一个完整的shell命令，执行后$FIRMWARE_PATH会被替换为具体的路径值
+          df -hT $FIRMWARE_PATH
+          echo "LEDE_FIRMWARE_PATH" >> $GITHUB_ENV
 
       - name: Clone source code
         working-directory: /workdir
         run: |
-          df -hT $PWD
           git clone $LEDE_REPO -b $LEDE_BRANCH openwrt
           ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
@@ -76,11 +78,11 @@ jobs:
           # find ./ -maxdepth 4 -type f -iregex ".*\(sh\)$" -exec dos2unix {} \; -exec chmod +x {} \;
           find ./ -maxdepth 4 -type f -name "*.sh" -exec dos2unix {} \; -exec chmod +x {} \;
 
-      - name: Update feeds
-        run: cd openwrt && ./scripts/feeds update -a
-
-      - name: Install feeds
-        run: cd openwrt && ./scripts/feeds install -a
+      - name: Update and install feeds
+        run: |
+          cd openwrt 
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
 
       - name: Custom packages
         run: |
@@ -95,7 +97,7 @@ jobs:
         run: |
           [ -e files ] && mv files openwrt/files
           [ -e $LEDE_CONFIG ] && mv $LEDE_CONFIG openwrt/.config
-          # Check scripts中已授权，故注释掉下面两行
+          # Check scripts中已授权，故注释掉下面这行
           # chmod +x $GITHUB_WORKSPACE/scripts/lede/settings.sh
           cd openwrt
           $GITHUB_WORKSPACE/scripts/lede/settings.sh
@@ -108,64 +110,73 @@ jobs:
           make download -j$(nproc)
           find dl -size -1024c -exec ls -l {} \;
           find dl -size -1024c -exec rm -f {} \;
+          
+      - name: Check disk space before compile firmware
+        run: |
+          echo "=== Disk space before compile firmware ==="
+          df -h
 
-      - name: Compile the firmware
+      - name: Compile firmware
         id: compile
         run: |
           cd openwrt
-          echo -e "$(nproc) thread compile"
           make -j$(nproc) || make -j1 || make -j1 V=s
-          echo "status=success" >> $GITHUB_OUTPUT
-          echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
+          echo "FILE_DATE=_$(TZ=UTC-8 date +"%y.%m.%d.-%H.%M.%S")" >> $GITHUB_ENV
 
-      - name: Check space usage
-        if: (!cancelled())
-        run: df -hT
-
-      - name: Upload bin directory
-        uses: actions/upload-artifact@main
-        if: steps.compile.outputs.status == 'success' && env.LEDE_UPLOAD_BIN_DIR == 'true'
-        with:
-          name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
-          path: openwrt/bin
-
-      - name: Organize files
-        id: organize
-        if: env.LEDE_UPLOAD_FIRMWARE == 'true' && !cancelled()
+      - name: Machine information
         run: |
-          cd openwrt/bin/targets/*/*
-          rm -rf packages
+          cd opentwrt
+
+          echo "======================="
+          lscpu | grep -E "name|Core|Thread"
+          echo "======================="
+          df -h
+          echo "======================="
+          du -h --max-depth=1
+          echo "======================="
+
+      #- name: Upload bin directory
+      #  uses: actions/upload-artifact@main
+      #  with:
+      #    name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+      #    path: openwrt/bin
+
+      #- name: Organize files
+      #  id: organize
+      #  run: |
+      #    cd openwrt/bin/targets/*/*
+      #    rm -rf packages
+      #    echo "LEDE_KVER=$(find openwrt/bin/targets/ -type f -name "*.manifest" -exec grep -oP '^kernel - \K[\d\.]+' {} \;)" >> $GITHUB_ENV
+      #    echo "LEDE_LIST=$(find openwrt/bin/targets/ -type f -name "*.manifest" -exec grep -oP '^luci-(app|theme)[^ ]*' {} \; | tr '\n' ' ')" >> $GITHUB_ENV
+
+      - name: Package firmware
+        run: |
+          cd openwrt && mkdir ./upload/
+
+          cp -f ./.config ./upload/config-"${{ env.FILE_DATE }}".txt
+
           echo "LEDE_KVER=$(find openwrt/bin/targets/ -type f -name "*.manifest" -exec grep -oP '^kernel - \K[\d\.]+' {} \;)" >> $GITHUB_ENV
           echo "LEDE_LIST=$(find openwrt/bin/targets/ -type f -name "*.manifest" -exec grep -oP '^luci-(app|theme)[^ ]*' {} \; | tr '\n' ' ')" >> $GITHUB_ENV
-          echo "FIRMWARE=$PWD" >> $GITHUB_ENV
-          echo "status=success" >> $GITHUB_OUTPUT
+          
+          find openwrt/bin/targets/ -iregex ".*\(buildinfo\|json\|sha256sums\|packages\)$" -exec rm -rf {} +
+          
+          find openwrt/bin/targets/ -type f -exec mv -f {} ./upload/ \;
+          make clean -j$(nproc)
 
-      - name: Upload firmware directory
-        uses: actions/upload-artifact@main
-        if: steps.organize.outputs.status == 'success' && !cancelled()
-        with:
-          name: OpenWrt_firmware${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
-          path: ${{ env.FIRMWARE }}
 
-      - name: Generate release tag
-        id: tag
-        if: env.LEDE_UPLOAD_RELEASE == 'true' && !cancelled()
-        run: |
-          echo "release_tag=$(TZ=UTC-8 date +"%Y.%m.%d-%H.%M.%S")-${{ env.LEDE_FIRMWARE_TAG }}" >> $GITHUB_OUTPUT
-          touch release.txt
-          [ ${UPLOAD_GOFILE} = true && ${{ steps.gofile.outputs.url }} ] && echo "?? [GoFile](${{ steps.gofile.outputs.url }})" >> release.txt
-          echo "status=success" >> $GITHUB_OUTPUT
+      #- name: Upload firmware directory
+      #  uses: actions/upload-artifact@main
+      #  with:
+      #    name: OpenWrt_firmware_${{ env.DEVICE_NAME }}_${{ env.FILE_DATE }}
+      #    path: ${{ env.LEDE_FIRMWARE_PATH }}
 
       - name: Upload firmware to release
         uses: softprops/action-gh-release@master
-        if: steps.tag.outputs.status == 'success' && !cancelled()
         with:
-          tag_name: ${{ steps.tag.outputs.release_tag }}
-          body_path: release.txt
-          #files: ${{ env.FIRMWARE }}/*
+          tag_name: ${{ env.FILE_DATE }}-${{ env.LEDE_FIRMWARE_TAG }}
           files: |
-            ${{ env.FIRMWARE }}/openwrt-*.bin
-            ${{ env.FIRMWARE }}/openwrt-*.manifest
+            openwrt/upload/openwrt-*.bin
+            openwrt/upload/openwrt-*.manifest
           body: |
             源码：${{env.LEDE_REPO}}
             分支：${{env.LEDE_BRANCH}}
@@ -173,15 +184,3 @@ jobs:
             内核版本：${{env.LEDE_KVER}}
             插件列表：${{env.LEDE_LIST}}
 
-      #- name: Delete workflow runs
-      #  uses: Mattraks/delete-workflow-runs@main
-      #  with:
-      #    retain_days: 0
-      #    keep_minimum_runs: 2
-
-      #- name: Remove old Releases
-      #  uses: dev-drprasad/delete-older-releases@master
-      #  if: env.LEDE_UPLOAD_RELEASE == 'true' && !cancelled()
-      #  with:
-      #    keep_latest: 6
-      #    delete_tags: true
