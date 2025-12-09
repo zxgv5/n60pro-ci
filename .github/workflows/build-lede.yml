@@ -176,16 +176,16 @@ jobs:
 
       - name: Package firmware
         run: |
-          cd openwrt && mkdir ./upload/
+          cd openwrt && mkdir -p ./upload/
 
           cp -f ./.config ./upload/config-"${{ env.FILE_DATE }}".txt
 
-          echo "LEDE_KVER=$(find openwrt/bin/targets/ -type f -name "*.manifest" -exec grep -oP '^kernel - \K[\d\.]+' {} \;)" >> $GITHUB_ENV
-          echo "LEDE_LIST=$(find openwrt/bin/targets/ -type f -name "*.manifest" -exec grep -oP '^luci-(app|theme)[^ ]*' {} \; | tr '\n' ' ')" >> $GITHUB_ENV
+          echo "LEDE_KVER=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^kernel - \K[\d\.]+' {} \;)" >> $GITHUB_ENV
+          echo "LEDE_LIST=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^luci-(app|theme)[^ ]*' {} \; | tr '\n' ' ')" >> $GITHUB_ENV
           
-          find openwrt/bin/targets/ -iregex ".*\(buildinfo\|json\|sha256sums\|packages\)$" -exec rm -rf {} +
+          find ./bin/targets/ -iregex ".*\(buildinfo\|json\|sha256sums\|packages\)$" -exec rm -rf {} +
           
-          find openwrt/bin/targets/ -type f -exec mv -f {} ./upload/ \;
+          find ./bin/targets/ -type f -exec mv -f {} ./upload/ \;
           make clean -j$(nproc)
 
 
