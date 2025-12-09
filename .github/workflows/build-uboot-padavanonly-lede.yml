@@ -60,7 +60,7 @@ jobs:
       - name: Initialization values
         run: |
           echo "WRT_AUTHOR=$(echo $WRT_REPO | cut -d '/' -f 4)" >> $GITHUB_ENV
-          echo "WRT_DATE=$(TZ=UTC-8 date +"%y.%m.%d")" >> $GITHUB_ENV
+          echo "WRT_DATE=$(TZ=UTC-8 date +"%y.%m.%d-%H.%M.%S")" >> $GITHUB_ENV
           echo "WRT_VER=$(echo ${{matrix.WRT_ATF}} | grep -oP 'atf-\d+')_$(echo ${{matrix.WRT_MTK}} | grep -oP 'mtk-\d+')" >> $GITHUB_ENV
 
       - name: Clone code
@@ -141,7 +141,8 @@ jobs:
       - name: Release firmware
         uses: softprops/action-gh-release@master
         with:
-          tag_name: ${{env.WRT_AUTHOR}}_${{env.WRT_VER}}_${{env.WRT_DATE}}
+          #tag_name: ${{env.WRT_AUTHOR}}_${{env.WRT_VER}}_${{env.WRT_DATE}}
+          tag_name: ${{env.WRT_DATE}}-uboot-padavanonly-lede
           files: |
             ./wrt/upload/mt7986_netcore_n60-pro-*.bin
             ./wrt/upload/*.zip
