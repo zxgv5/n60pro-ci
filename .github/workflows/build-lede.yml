@@ -19,7 +19,7 @@ env:
   DEVICE_NAME: netcore_n60-pro
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Free disk space
