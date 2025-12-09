@@ -128,7 +128,8 @@ jobs:
         run: |
           cd openwrt
           make defconfig
-          make download -j$(nproc)
+          #make download -j$(nproc)
+          make download -j16
           find dl -size -1024c -exec ls -l {} \;
           find dl -size -1024c -exec rm -f {} \;
           
@@ -137,12 +138,15 @@ jobs:
           echo "=== Disk space before compile firmware ==="
           df -h
 
+      - name: Mark compile time
+        run: |
+          echo "FILE_DATE=$(TZ=UTC-8 date +"%y.%m.%d-%H.%M.%S")" >> $GITHUB_ENV
+
       - name: Compile firmware
         id: compile
         run: |
           cd openwrt
           make -j$(nproc) || make -j1 || make -j1 V=s
-          echo "FILE_DATE=_$(TZ=UTC-8 date +"%y.%m.%d.-%H.%M.%S")" >> $GITHUB_ENV
 
       - name: Machine information
         run: |
