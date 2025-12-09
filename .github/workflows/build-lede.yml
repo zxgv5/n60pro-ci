@@ -146,7 +146,7 @@ jobs:
 
       - name: Machine information
         run: |
-          cd opentwrt
+          cd openwrt
 
           echo "======================="
           lscpu | grep -E "name|Core|Thread"
