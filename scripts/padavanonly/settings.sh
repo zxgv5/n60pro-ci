@@ -1,5 +1,9 @@
 #!/bin/bash
 
+#修改内核为6.12
+TARGET_MEDIATEK_MAKEFILE="./target/linux/mediatek/Makefile"
+sed -i 's/^\(KERNEL_PATCHVER\s*:=\s*\).*/\16.12/' $TARGET_ARM_MAKEFILE
+
 #移除luci-app-attendedsysupgrade
 sed -i "/attendedsysupgrade/d" $(find ./feeds/luci/collections/ -type f -name "Makefile")
 #修改默认主题
