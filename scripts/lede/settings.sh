@@ -14,6 +14,15 @@ sed -i 's/luci-app-accesscontrol //g' $TARGET_MK_FILE
 sed -i 's/luci-app-nlbwmon //g' $TARGET_MK_FILE
 sed -i 's/luci-app-wol //g' $TARGET_MK_FILE
 
+#修改内核为6.12
+TARGET_MEDIATEK_MAKEFILE="./target/linux/armsr/Makefile"
+sed -i 's/^\(KERNEL_\(TESTING_\)\?PATCHVER\s*:=\s*\).*/\16.12/' $TARGET_MEDIATEK_MAKEFILE
+
+#if [ -f "$TARGET_MEDIATEK_MAKEFILE" ]; then
+#  sed -i 's/^\(KERNEL_\(TESTING_\)\?PATCHVER\s*:=\s*\).*/\16.12/' $TARGET_MEDIATEK_MAKEFILE
+#  echo "Kernel patch versions updated to 6.12!"
+#fi
+
 #移除luci-app-attendedsysupgrade
 sed -i "/attendedsysupgrade/d" $(find ./feeds/luci/collections/ -type f -name "Makefile")
 #修改immortalwrt.lan关联IP
