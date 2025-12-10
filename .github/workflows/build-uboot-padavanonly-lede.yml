@@ -15,7 +15,6 @@ permissions: write-all
 jobs:
   build:
     runs-on: ubuntu-latest
-    needs: cleanup
     strategy:
       fail-fast: false
       matrix:
