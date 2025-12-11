@@ -1,7 +1,8 @@
 #!/bin/bash
 
+#目前（25.12），padavanonly支持的内核最高版本为6.6，故回退如下升级修改
 #修改内核为6.12
-TARGET_MEDIATEK_MAKEFILE="./target/linux/mediatek/Makefile"
+#TARGET_MEDIATEK_MAKEFILE="./target/linux/mediatek/Makefile"
 sed -i 's/^\(KERNEL_PATCHVER\s*:=\s*\).*/\16.12/' $TARGET_ARM_MAKEFILE
 
 #移除luci-app-attendedsysupgrade
