@@ -39,13 +39,40 @@ if [ -n "$PADAVANONLY_PACKAGE" ]; then
     echo -e "$PADAVANONLY_PACKAGE" >> ./.config
 fi
 
-#添加wireguard防火墙规则
-FIREWALL_FILE="./package/network/config/firewall/files/firewall.config"
-cat >> $FIREWALL_FILE <<EOF
-config rule
-    option name 'Allow-Wireguard-Inbound'
-    option src '*'
-    list proto 'udp'
-    option dest_port '52077'
-    option target 'ACCEPT'
-EOF
+# 添加防火墙规则
+add_firewall_rule() {
+    local name="${1:-Allow-Wireguard-Inbound}"
+    local port="${2:-52077}"
+    local proto="${3:-udp}"
+    local src="${4:-*}"
+    local target="${5:-ACCEPT}"
+    local file="${6:-./package/network/config/firewall/files/firewall.config}"
+    
+    {
+        printf "config rule\n"
+        printf "    option name '%s'\n" "$name"
+        printf "    option src '%s'\n" "$src"
+        
+        # 输出协议行
+        for p in $proto; do
+            [[ -n "$p" ]] && printf "    list proto '%s'\n" "$p"
+        done
+        
+        printf "    option dest_port '%s'\n" "$port"
+        printf "    option target '%s'\n" "$target"
+    } >> "$file"
+}
+
+# 添加wireguard防火墙规则
+add_firewall_rule "Allow-Wireguard-Inbound" "52077"
+
+# 添加wireguard防火墙规则
+# FIREWALL_FILE="./package/network/config/firewall/files/firewall.config"
+# cat >> $FIREWALL_FILE <<EOF
+# config rule
+#     option name 'Allow-Wireguard-Inbound'
+#     option src '*'
+#     list proto 'udp'
+#     option dest_port '52077'
+#     option target 'ACCEPT'
+# EOF
