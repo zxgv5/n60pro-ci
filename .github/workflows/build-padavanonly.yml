@@ -28,30 +28,30 @@ jobs:
               BRANCH: "openwrt-24.10-6.6",
             }
 
-    #调用公用编译核心WRT-CORE.yml
-    uses: ./.github/workflows/build-padavanonly-core.yml
+    #调用公用编译核心build-oc-core.yml(oc表示OpenWRT和CloseWRT)
+    uses: ./.github/workflows/build-oc-core.yml
     with:
       #编译配置
-      PADAVANONLY_CONFIG: ${{matrix.CONFIG}}
+      OC_CONFIG: ${{matrix.CONFIG}}
       #默认主题
-      PADAVANONLY_THEME: argon
+      OC_THEME: argon
       #默认主机名
-      PADAVANONLY_NAME: n60pro
+      OC_NAME: n60pro
       #默认WIFI名称
-      PADAVANONLY_SSID: 778v5
+      OC_SSID: 778v5
       #默认WIFI密码
-      PADAVANONLY_WORD: 12345678
+      OC_WORD: 12345678
       #默认地址
-      PADAVANONLY_IP: 192.168.10.1
+      OC_IP: 192.168.10.1
       #默认密码，仅作提示，修改无用
-      PADAVANONLY_PW: 无
+      OC_PW: 无
       #tag名
-      PADAVANONLY_TAG: padavanonly
+      OC_TAG: padavanonly
       #源码链接
-      PADAVANONLY_REPO: https://github.com/${{matrix.REPO_INFO.SOURCE}}.git
+      OC_REPO: https://github.com/${{matrix.REPO_INFO.SOURCE}}.git
       #源码分支
-      PADAVANONLY_BRANCH: ${{matrix.REPO_INFO.BRANCH}}
+      OC_BRANCH: ${{matrix.REPO_INFO.BRANCH}}
       #源码名称
-      PADAVANONLY_SOURCE: ${{matrix.REPO_INFO.SOURCE}}
+      OC_SOURCE: ${{matrix.REPO_INFO.SOURCE}}
       #插件调整
-      PADAVANONLY_PACKAGE: ${{inputs.PACKAGE}}
+      OC_PACKAGE: ${{inputs.PACKAGE}}

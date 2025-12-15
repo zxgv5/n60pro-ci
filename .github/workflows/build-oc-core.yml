@@ -1,63 +1,63 @@
-name: build-padavanonly-core
+name: build-oc-core
 
 on:
   workflow_call:
     inputs:
-      PADAVANONLY_CONFIG:
+      OC_CONFIG:
         required: true
         type: string
-      PADAVANONLY_THEME:
+      OC_THEME:
         required: true
         type: string
-      PADAVANONLY_NAME:
+      OC_NAME:
         required: true
         type: string
-      PADAVANONLY_SSID:
+      OC_SSID:
         required: true
         type: string
-      PADAVANONLY_WORD:
+      OC_WORD:
         required: true
         type: string
-      PADAVANONLY_IP:
+      OC_IP:
         required: true
         type: string
-      PADAVANONLY_PW:
+      OC_PW:
         required: true
         type: string
-      PADAVANONLY_TAG:
+      OC_TAG:
         required: true
         type: string
-      PADAVANONLY_REPO:
+      OC_REPO:
         required: true
         type: string
-      PADAVANONLY_BRANCH:
+      OC_BRANCH:
         required: true
         type: string
-      PADAVANONLY_SOURCE:
+      OC_SOURCE:
         required: true
         type: string
-      PADAVANONLY_PACKAGE:
+      OC_PACKAGE:
         required: false
         type: string
 
 env:
   GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-  PADAVANONLY_CONFIG: ${{inputs.PADAVANONLY_CONFIG}}
-  PADAVANONLY_THEME: ${{inputs.PADAVANONLY_THEME}}
-  PADAVANONLY_NAME: ${{inputs.PADAVANONLY_NAME}}
-  PADAVANONLY_SSID: ${{inputs.PADAVANONLY_SSID}}
-  PADAVANONLY_WORD: ${{inputs.PADAVANONLY_WORD}}
-  PADAVANONLY_IP: ${{inputs.PADAVANONLY_IP}}
-  PADAVANONLY_PW: ${{inputs.PADAVANONLY_PW}}
-  PADAVANONLY_TAG: ${{inputs.PADAVANONLY_TAG}}
-  PADAVANONLY_REPO: ${{inputs.PADAVANONLY_REPO}}
-  PADAVANONLY_BRANCH: ${{inputs.PADAVANONLY_BRANCH}}
-  PADAVANONLY_SOURCE: ${{inputs.PADAVANONLY_SOURCE}}
-  PADAVANONLY_PACKAGE: ${{inputs.PADAVANONLY_PACKAGE}}
+  OC_CONFIG: ${{inputs.OC_CONFIG}}
+  OC_THEME: ${{inputs.OC_THEME}}
+  OC_NAME: ${{inputs.OC_NAME}}
+  OC_SSID: ${{inputs.OC_SSID}}
+  OC_WORD: ${{inputs.OC_WORD}}
+  OC_IP: ${{inputs.OC_IP}}
+  OC_PW: ${{inputs.OC_PW}}
+  OC_TAG: ${{inputs.OC_TAG}}
+  OC_REPO: ${{inputs.OC_REPO}}
+  OC_BRANCH: ${{inputs.OC_BRANCH}}
+  OC_SOURCE: ${{inputs.OC_SOURCE}}
+  OC_PACKAGE: ${{inputs.OC_PACKAGE}}
 
 jobs:
   core:
-    name: ${{inputs.PADAVANONLY_SOURCE}}
+    name: ${{inputs.OC_SOURCE}}
     runs-on: ubuntu-latest
     steps:
       - name: Free disk space ubuntu-latest
@@ -96,18 +96,18 @@ jobs:
 
       - name: Initialization values
         run: |
-          echo "PADAVANONLY_DATE=$(TZ=UTC-8 date +"%y.%m.%d-%H.%M.%S")" >> $GITHUB_ENV
-          echo "PADAVANONLY_MARK=${GITHUB_REPOSITORY%%/*}" >> $GITHUB_ENV
-          echo "PADAVANONLY_INFO=${PADAVANONLY_SOURCE%%/*}" >> $GITHUB_ENV
-          echo "PADAVANONLY_TARGET=$(grep -m 1 -oP '^CONFIG_TARGET_\K[\w]+(?=\=y)' ./config/padavanonly/padavanonly.conf)" >> $GITHUB_ENV
-          echo "PADAVANONLY_KVER=none" >> $GITHUB_ENV
-          echo "PADAVANONLY_LIST=none" >> $GITHUB_ENV
+          echo "OC_DATE=$(TZ=UTC-8 date +"%y.%m.%d-%H.%M.%S")" >> $GITHUB_ENV
+          echo "OC_MARK=${GITHUB_REPOSITORY%%/*}" >> $GITHUB_ENV
+          echo "OC_INFO=${OC_SOURCE%%/*}" >> $GITHUB_ENV
+          echo "OC_TARGET=$(grep -m 1 -oP '^CONFIG_TARGET_\K[\w]+(?=\=y)' ./config/padavanonly/padavanonly.conf)" >> $GITHUB_ENV
+          echo "OC_KVER=none" >> $GITHUB_ENV
+          echo "OC_LIST=none" >> $GITHUB_ENV
 
       - name: Clone code
         run: |
-          git clone --depth=1 --single-branch --branch $PADAVANONLY_BRANCH $PADAVANONLY_REPO ./wrt/
+          git clone --depth=1 --single-branch --branch $OC_BRANCH $OC_REPO ./wrt/
 
-          cd ./wrt/ && echo "PADAVANONLY_HASH=$(git log -1 --pretty=format:'%h')" >> $GITHUB_ENV
+          cd ./wrt/ && echo "OC_HASH=$(git log -1 --pretty=format:'%h')" >> $GITHUB_ENV
 
           # 如果不存在 defconfig 则直接结束工作流
           if [ ! -d "defconfig" ]; then
@@ -129,8 +129,8 @@ jobs:
         id: check-cache
         uses: actions/cache@main
         with:
-          key: ${{env.PADAVANONLY_CONFIG}}-${{env.PADAVANONLY_INFO}}-${{env.PADAVANONLY_HASH}}
-          restore-keys: ${{env.PADAVANONLY_CONFIG}}-${{env.PADAVANONLY_INFO}}
+          key: ${{env.OC_CONFIG}}-${{env.OC_INFO}}-${{env.OC_HASH}}
+          restore-keys: ${{env.OC_CONFIG}}-${{env.OC_INFO}}
           path: |
             ./wrt/.ccache
             ./wrt/staging_dir/host*
@@ -151,7 +151,7 @@ jobs:
           fi
 
           if ${{steps.check-cache.outputs.cache-hit != 'true'}}; then
-            CACHE_LIST=$(gh cache list --key "$PADAVANONLY_CONFIG-$PADAVANONLY_INFO" | cut -f 1)
+            CACHE_LIST=$(gh cache list --key "$OC_CONFIG-$OC_INFO" | cut -f 1)
             for CACHE_KEY in $CACHE_LIST; do
               gh cache delete $CACHE_KEY
             done
@@ -216,15 +216,15 @@ jobs:
         run: |
           cd ./wrt/ && mkdir ./upload/
 
-          cp -f ./.config ./upload/config-"$PADAVANONLY_CONFIG"-"$PADAVANONLY_INFO"-"$PADAVANONLY_BRANCH"-"$PADAVANONLY_DATE".txt
+          cp -f ./.config ./upload/config-"$OC_CONFIG"-"$OC_INFO"-"$OC_BRANCH"-"$OC_DATE".txt
 
-          echo "PADAVANONLY_KVER=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^kernel - \K[\d\.]+' {} \;)" >> $GITHUB_ENV
-          echo "PADAVANONLY_LIST=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^luci-(app|theme)[^ ]*' {} \; | tr '\n' ' ')" >> $GITHUB_ENV
+          echo "OC_KVER=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^kernel - \K[\d\.]+' {} \;)" >> $GITHUB_ENV
+          echo "OC_LIST=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^luci-(app|theme)[^ ]*' {} \; | tr '\n' ' ')" >> $GITHUB_ENV
           find ./bin/targets/ -iregex ".*\(buildinfo\|json\|sha256sums\|packages\)$" -exec rm -rf {} +
-          for FILE in $(find ./bin/targets/ -type f -iname "*$PADAVANONLY_TARGET*") ; do
+          for FILE in $(find ./bin/targets/ -type f -iname "*$OC_TARGET*") ; do
             EXT=$(basename $FILE | cut -d '.' -f 2-)
-            NAME=$(basename $FILE | cut -d '.' -f 1 | grep -io "\($PADAVANONLY_TARGET\).*")
-            NEW_FILE="$PADAVANONLY_INFO"-"$PADAVANONLY_BRANCH"-"$NAME"-"$PADAVANONLY_DATE"."$EXT"
+            NAME=$(basename $FILE | cut -d '.' -f 1 | grep -io "\($OC_TARGET\).*")
+            NEW_FILE="$OC_INFO"-"$OC_BRANCH"-"$NAME"-"$OC_DATE"."$EXT"
             mv -f $FILE ./upload/$NEW_FILE
           done
           find ./bin/targets/ -type f -exec mv -f {} ./upload/ \;
@@ -234,33 +234,33 @@ jobs:
       # - name: Upload Firmware As Artifact
       #   uses: actions/upload-artifact@main
       #   with:
-      #     name: firmware-${{ env.PADAVANONLY_CONFIG }}-${{ env.PADAVANONLY_INFO }}-${{ env.PADAVANONLY_BRANCH }}-${{ env.PADAVANONLY_DATE }}
+      #     name: firmware-${{ env.OC_CONFIG }}-${{ env.OC_INFO }}-${{ env.OC_BRANCH }}-${{ env.OC_DATE }}
       #     path: ./wrt/upload/
       #     retention-days: 90
 
       - name: Release firmware
         uses: softprops/action-gh-release@master
         with:
-          # tag_name: ${{env.PADAVANONLY_CONFIG}}-${{env.PADAVANONLY_INFO}}-${{env.PADAVANONLY_BRANCH}}-${{env.PADAVANONLY_DATE}}
-          tag_name: ${{env.PADAVANONLY_DATE}}-${{env.PADAVANONLY_TAG}}
+          # tag_name: ${{env.OC_CONFIG}}-${{env.OC_INFO}}-${{env.OC_BRANCH}}-${{env.OC_DATE}}
+          tag_name: ${{env.OC_DATE}}-${{env.OC_TAG}}
           # files: ./wrt/upload/*.*
           files: |
             ./wrt/upload/mt7986-ram-ddr4-bl2.bin
             ./wrt/upload/padavanonly-openwrt-*.manifest
             ./wrt/upload/padavanonly-openwrt-*.bin
           body: |
-            源码：${{env.PADAVANONLY_REPO}}
-            分支：${{env.PADAVANONLY_BRANCH}}
-            提交：${{env.PADAVANONLY_HASH}}
+            源码：${{env.OC_REPO}}
+            分支：${{env.OC_BRANCH}}
+            提交：${{env.OC_HASH}}
 
-            配置：${{env.PADAVANONLY_CONFIG}}
-            平台：${{env.PADAVANONLY_TARGET}}
+            配置：${{env.OC_CONFIG}}
+            平台：${{env.OC_TARGET}}
 
-            登录地址：${{env.PADAVANONLY_IP}}
-            登录密码：${{env.PADAVANONLY_PW}}
+            登录地址：${{env.OC_IP}}
+            登录密码：${{env.OC_PW}}
 
-            WIFI名称：${{env.PADAVANONLY_SSID}}
-            WIFI密码：${{env.PADAVANONLY_WORD}}
+            WIFI名称：${{env.OC_SSID}}
+            WIFI密码：${{env.OC_WORD}}
 
-            内核版本：${{env.PADAVANONLY_KVER}}
-            插件列表：${{env.PADAVANONLY_LIST}}
+            内核版本：${{env.OC_KVER}}
+            插件列表：${{env.OC_LIST}}
