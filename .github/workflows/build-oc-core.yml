@@ -251,8 +251,8 @@ jobs:
           # files: ./wrt/upload/*.*
           files: |
             ./wrt/upload/mt7986-ram-ddr4-bl2.bin
-            ./wrt/upload/$OC_TAG-openwrt-*.manifest
-            ./wrt/upload/$OC_TAG-openwrt-*.bin
+            ./wrt/upload/${{env.OC_TAG}}-openwrt-*.manifest
+            ./wrt/upload/${{env.OC_TAG}}-openwrt-*.bin
           body: |
             源码：${{env.OC_REPO}}
             分支：${{env.OC_BRANCH}}
