@@ -3,7 +3,7 @@ name: build-oc-core
 on:
   workflow_call:
     inputs:
-      OC_CONFIG:
+      OC_CHIP:
         required: true
         type: string
       OC_THEME:
@@ -36,13 +36,18 @@ on:
       OC_SOURCE:
         required: true
         type: string
+      OC_CONFIG:
+        required: true
+        type: string
+      OC_SCRIPTS:
+        required: true
+        type: string
       OC_PACKAGE:
         required: false
         type: string
-
 env:
   GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-  OC_CONFIG: ${{inputs.OC_CONFIG}}
+  OC_CHIP: ${{inputs.OC_CHIP}}
   OC_THEME: ${{inputs.OC_THEME}}
   OC_NAME: ${{inputs.OC_NAME}}
   OC_SSID: ${{inputs.OC_SSID}}
@@ -99,7 +104,7 @@ jobs:
           echo "OC_DATE=$(TZ=UTC-8 date +"%y.%m.%d-%H.%M.%S")" >> $GITHUB_ENV
           echo "OC_MARK=${GITHUB_REPOSITORY%%/*}" >> $GITHUB_ENV
           echo "OC_INFO=${OC_SOURCE%%/*}" >> $GITHUB_ENV
-          echo "OC_TARGET=$(grep -m 1 -oP '^CONFIG_TARGET_\K[\w]+(?=\=y)' ./config/padavanonly/padavanonly.conf)" >> $GITHUB_ENV
+          echo "OC_TARGET=$(grep -m 1 -oP '^CONFIG_TARGET_\K[\w]+(?=\=y)' ./$OC_CONFIG)" >> $GITHUB_ENV
           echo "OC_KVER=none" >> $GITHUB_ENV
           echo "OC_LIST=none" >> $GITHUB_ENV
 
@@ -129,8 +134,8 @@ jobs:
         id: check-cache
         uses: actions/cache@main
         with:
-          key: ${{env.OC_CONFIG}}-${{env.OC_INFO}}-${{env.OC_HASH}}
-          restore-keys: ${{env.OC_CONFIG}}-${{env.OC_INFO}}
+          key: ${{env.OC_CHIP}}-${{env.OC_INFO}}-${{env.OC_HASH}}
+          restore-keys: ${{env.OC_CHIP}}-${{env.OC_INFO}}
           path: |
             ./wrt/.ccache
             ./wrt/staging_dir/host*
@@ -151,7 +156,7 @@ jobs:
           fi
 
           if ${{steps.check-cache.outputs.cache-hit != 'true'}}; then
-            CACHE_LIST=$(gh cache list --key "$OC_CONFIG-$OC_INFO" | cut -f 1)
+            CACHE_LIST=$(gh cache list --key "$OC_CHIP-$OC_INFO" | cut -f 1)
             for CACHE_KEY in $CACHE_LIST; do
               gh cache delete $CACHE_KEY
             done
@@ -170,16 +175,16 @@ jobs:
         run: |
           cd ./wrt/package/
 
-          $GITHUB_WORKSPACE/scripts/padavanonly/packages.sh
-          $GITHUB_WORKSPACE/scripts/padavanonly/handles.sh
+          $GITHUB_WORKSPACE/$OC_SCRIPTS/packages.sh
+          $GITHUB_WORKSPACE/$OC_SCRIPTS/handles.sh
 
       - name: Custom settings
         run: |
           cd ./wrt/
 
-          cat $GITHUB_WORKSPACE/config/padavanonly/padavanonly.conf >> .config
+          cat $GITHUB_WORKSPACE/$OC_CONFIG >> .config
 
-          $GITHUB_WORKSPACE/scripts/padavanonly/settings.sh
+          $GITHUB_WORKSPACE/$OC_SCRIPTS/settings.sh
 
           make defconfig -j$(nproc) && make clean -j$(nproc)
 
@@ -216,7 +221,7 @@ jobs:
         run: |
           cd ./wrt/ && mkdir ./upload/
 
-          cp -f ./.config ./upload/config-"$OC_CONFIG"-"$OC_INFO"-"$OC_BRANCH"-"$OC_DATE".txt
+          cp -f ./.config ./upload/config-"$OC_CHIP"-"$OC_INFO"-"$OC_BRANCH"-"$OC_DATE".txt
 
           echo "OC_KVER=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^kernel - \K[\d\.]+' {} \;)" >> $GITHUB_ENV
           echo "OC_LIST=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^luci-(app|theme)[^ ]*' {} \; | tr '\n' ' ')" >> $GITHUB_ENV
@@ -234,26 +239,26 @@ jobs:
       # - name: Upload Firmware As Artifact
       #   uses: actions/upload-artifact@main
       #   with:
-      #     name: firmware-${{ env.OC_CONFIG }}-${{ env.OC_INFO }}-${{ env.OC_BRANCH }}-${{ env.OC_DATE }}
+      #     name: firmware-${{ env.OC_CHIP }}-${{ env.OC_INFO }}-${{ env.OC_BRANCH }}-${{ env.OC_DATE }}
       #     path: ./wrt/upload/
       #     retention-days: 90
 
       - name: Release firmware
         uses: softprops/action-gh-release@master
         with:
-          # tag_name: ${{env.OC_CONFIG}}-${{env.OC_INFO}}-${{env.OC_BRANCH}}-${{env.OC_DATE}}
+          # tag_name: ${{env.OC_CHIP}}-${{env.OC_INFO}}-${{env.OC_BRANCH}}-${{env.OC_DATE}}
           tag_name: ${{env.OC_DATE}}-${{env.OC_TAG}}
           # files: ./wrt/upload/*.*
           files: |
             ./wrt/upload/mt7986-ram-ddr4-bl2.bin
-            ./wrt/upload/padavanonly-openwrt-*.manifest
-            ./wrt/upload/padavanonly-openwrt-*.bin
+            ./wrt/upload/$OC_TAG-openwrt-*.manifest
+            ./wrt/upload/$OC_TAG-openwrt-*.bin
           body: |
             源码：${{env.OC_REPO}}
             分支：${{env.OC_BRANCH}}
             提交：${{env.OC_HASH}}
 
-            配置：${{env.OC_CONFIG}}
+            配置：${{env.OC_CHIP}}
             平台：${{env.OC_TARGET}}
 
             登录地址：${{env.OC_IP}}

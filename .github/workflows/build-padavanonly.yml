@@ -17,11 +17,11 @@ permissions: write-all
 #CI任务
 jobs:
   config:
-    name: ${{matrix.CONFIG}}
+    name: ${{matrix.CHIP_CONFIG}}
     strategy:
       fail-fast: false
       matrix:
-        CONFIG: [MT7986]
+        CHIP_CONFIG: [MT7986]
         REPO_INFO:
           - {
               SOURCE: "padavanonly/immortalwrt-mt798x-6.6",
@@ -32,7 +32,7 @@ jobs:
     uses: ./.github/workflows/build-oc-core.yml
     with:
       #编译配置
-      OC_CONFIG: ${{matrix.CONFIG}}
+      OC_CHIP: ${{matrix.CHIP_CONFIG}}
       #默认主题
       OC_THEME: argon
       #默认主机名
@@ -53,5 +53,9 @@ jobs:
       OC_BRANCH: ${{matrix.REPO_INFO.BRANCH}}
       #源码名称
       OC_SOURCE: ${{matrix.REPO_INFO.SOURCE}}
+      #配置文件
+      OC_CONFIG: config/padavanonly/padavanonly.conf
+      #脚本文件路径
+      OC_SCRIPTS: scripts/padavanonly
       #插件调整
       OC_PACKAGE: ${{inputs.PACKAGE}}
