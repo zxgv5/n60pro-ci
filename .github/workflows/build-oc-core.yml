@@ -58,6 +58,8 @@ env:
   OC_REPO: ${{inputs.OC_REPO}}
   OC_BRANCH: ${{inputs.OC_BRANCH}}
   OC_SOURCE: ${{inputs.OC_SOURCE}}
+  OC_CONFIG: ${{inputs.OC_CONFIG}}
+  OC_SCRIPTS: ${{inputs.OC_SCRIPTS}}
   OC_PACKAGE: ${{inputs.OC_PACKAGE}}
 
 jobs:
