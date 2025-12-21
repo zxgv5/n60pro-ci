@@ -56,7 +56,7 @@ jobs:
           #sudo bash -c 'bash <(curl -sL https://build-scripts.immortalwrt.org/init_build_environment.sh)'
           sudo timedatectl set-timezone "$TIME_ZONE"
           sudo mkdir -p /workdir
-          sudo chown $USER:$GROUPS /workdir
+          sudo chown "$USER":"$GROUPS" /workdir
 
       #- name: Initialization environment
       #  env:
@@ -83,13 +83,13 @@ jobs:
           echo "LEDE_KVER=none" >> $GITHUB_ENV
           echo "LEDE_LIST=none" >> $GITHUB_ENV
           # df -hT $FIRMWARE_PATH是一个完整的shell命令，执行后$FIRMWARE_PATH会被替换为具体的路径值
-          df -hT $FIRMWARE_PATH
-          echo "LEDE_FIRMWARE_PATH=$FIRMWARE_PATH" >> $GITHUB_ENV
+          df -hT "$FIRMWARE_PATH"
+          echo "LEDE_FIRMWARE_PATH=\"$FIRMWARE_PATH\"" >> $GITHUB_ENV
 
       - name: Clone source code
         working-directory: /workdir
         run: |
-          git clone $LEDE_REPO -b $LEDE_BRANCH openwrt
+          git clone "$LEDE_REPO" -b "$LEDE_BRANCH" openwrt
           ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
       - name: Check scripts
@@ -117,7 +117,7 @@ jobs:
       - name: Load custom configuration
         run: |
           [ -e files ] && mv files ./openwrt/files
-          [ -e $LEDE_CONFIG ] && mv $LEDE_CONFIG ./openwrt/.config
+          [ -e "$LEDE_CONFIG" ] && mv "$LEDE_CONFIG" ./openwrt/.config
           # Check scripts中已授权，故注释掉下面这行
           # chmod +x $GITHUB_WORKSPACE/scripts/lede/settings.sh
           cd ./openwrt

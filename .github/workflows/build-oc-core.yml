@@ -106,13 +106,13 @@ jobs:
           echo "OC_DATE=$(TZ=UTC-8 date +"%y.%m.%d-%H.%M.%S")" >> $GITHUB_ENV
           echo "OC_MARK=${GITHUB_REPOSITORY%%/*}" >> $GITHUB_ENV
           echo "OC_INFO=${OC_SOURCE%%/*}" >> $GITHUB_ENV
-          echo "OC_TARGET=$(grep -m 1 -oP '^CONFIG_TARGET_\K[\w]+(?=\=y)' ./$OC_CONFIG)" >> $GITHUB_ENV
+          echo "OC_TARGET=$(grep -m 1 -oP '^CONFIG_TARGET_\K[\w]+(?=\=y)' \"./$OC_CONFIG\")" >> $GITHUB_ENV
           echo "OC_KVER=none" >> $GITHUB_ENV
           echo "OC_LIST=none" >> $GITHUB_ENV
 
       - name: Clone code
         run: |
-          git clone --depth=1 --single-branch --branch $OC_BRANCH $OC_REPO ./wrt/
+          git clone --depth=1 --single-branch --branch "$OC_BRANCH" "$OC_REPO" ./wrt/
 
           cd ./wrt/ && echo "OC_HASH=$(git log -1 --pretty=format:'%h')" >> $GITHUB_ENV
 
@@ -158,7 +158,7 @@ jobs:
           fi
 
           if ${{steps.check-cache.outputs.cache-hit != 'true'}}; then
-            CACHE_LIST=$(gh cache list --key "$OC_CHIP-$OC_INFO" | cut -f 1)
+            CACHE_LIST=$(gh cache list --key "$OC_CHIP"-"$OC_INFO" | cut -f 1)
             for CACHE_KEY in $CACHE_LIST; do
               gh cache delete $CACHE_KEY
             done
@@ -177,16 +177,16 @@ jobs:
         run: |
           cd ./wrt/package/
 
-          $GITHUB_WORKSPACE/$OC_SCRIPTS/packages.sh
-          $GITHUB_WORKSPACE/$OC_SCRIPTS/handles.sh
+          $GITHUB_WORKSPACE/"$OC_SCRIPTS"/packages.sh
+          $GITHUB_WORKSPACE/"$OC_SCRIPTS"/handles.sh
 
       - name: Custom settings
         run: |
           cd ./wrt/
 
-          cat $GITHUB_WORKSPACE/$OC_CONFIG >> .config
+          cat $GITHUB_WORKSPACE/"$OC_CONFIG" >> .config
 
-          $GITHUB_WORKSPACE/$OC_SCRIPTS/settings.sh
+          $GITHUB_WORKSPACE/"$OC_SCRIPTS"/settings.sh
 
           make defconfig -j$(nproc) && make clean -j$(nproc)
 
@@ -230,7 +230,7 @@ jobs:
           find ./bin/targets/ -iregex ".*\(buildinfo\|json\|sha256sums\|packages\)$" -exec rm -rf {} +
           for FILE in $(find ./bin/targets/ -type f -iname "*$OC_TARGET*") ; do
             EXT=$(basename $FILE | cut -d '.' -f 2-)
-            NAME=$(basename $FILE | cut -d '.' -f 1 | grep -io "\($OC_TARGET\).*")
+            NAME=$(basename $FILE | cut -d '.' -f 1 | grep -io "\(\"$OC_TARGET\"\).*")
             NEW_FILE="$OC_INFO"-"$OC_BRANCH"-"$NAME"-"$OC_DATE"."$EXT"
             mv -f $FILE ./upload/$NEW_FILE
           done
