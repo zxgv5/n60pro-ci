@@ -46,6 +46,7 @@ UPDATE_PACKAGE() {
 
 # UPDATE_PACKAGE "包名" "项目地址" "项目分支" "pkg/name，可选，pkg为从大杂烩中单独提取包名插件；name为重命名为包名"
 ##UPDATE_PACKAGE "argon" "sbwml/luci-theme-argon" "openwrt-24.10"
+##UPDATE_PACKAGE "argon" "sbwml/luci-theme-argon" "openwrt-25.12"
 ##UPDATE_PACKAGE "ddns-go" "sirpdboy/luci-app-ddns-go" "main"
 ##UPDATE_PACKAGE "diskman" "lisaac/luci-app-diskman" "master"
 ##UPDATE_PACKAGE "fancontrol" "rockjake/luci-app-fancontrol" "main"
