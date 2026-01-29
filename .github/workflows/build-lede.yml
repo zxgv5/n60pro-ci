@@ -83,8 +83,8 @@ jobs:
           echo "LEDE_KVER=none" >> $GITHUB_ENV
           echo "LEDE_LIST=none" >> $GITHUB_ENV
           # df -hT $FIRMWARE_PATH是一个完整的shell命令，执行后$FIRMWARE_PATH会被替换为具体的路径值
-          df -hT "$FIRMWARE_PATH"
-          echo "LEDE_FIRMWARE_PATH=\"$FIRMWARE_PATH\"" >> $GITHUB_ENV
+          # df -hT "$FIRMWARE_PATH"
+          # echo "LEDE_FIRMWARE_PATH=\"$FIRMWARE_PATH\"" >> $GITHUB_ENV
 
       - name: Clone source code
         working-directory: /workdir
