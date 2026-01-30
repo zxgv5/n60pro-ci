@@ -203,6 +203,38 @@ jobs:
           echo "======================="
           du -h --max-depth=1
           echo "======================="
+          echo "编译目录大小:"
+          du -sh ./
+          echo "bin目录大小:"
+          du -sh ./bin/ 2>/dev/null || echo "bin目录不存在"
+          echo "build_dir目录大小:"
+          du -sh ./build_dir/ 2>/dev/null || echo "build_dir目录不存在"
+
+      - name: Verify compilation completed
+        run: |
+          cd ./wrt/
+          echo "=== 检查编译是否完成 ==="
+          # 检查是否有编译完成的标志文件
+          if [ -f "build.log" ] || [ -f ".build" ]; then
+            echo "找到编译标志文件"
+          fi
+          # 检查bin目录是否存在
+          if [ ! -d "./bin/targets/" ]; then
+            echo "错误: ./bin/targets/ 目录不存在，编译未完成"
+            echo "请检查编译日志是否有错误"
+            exit 1
+          fi
+          # 列出生成的固件文件
+          echo "生成的文件:"
+          find ./bin/ -name "*.bin" -o -name "*.img" -o -name "*.trx" | head -20
+          
+          # 检查是否有manifest文件
+          MANIFEST_COUNT=$(find ./bin/targets/ -name "*.manifest" 2>/dev/null | wc -l)
+          echo "manifest文件数量: $MANIFEST_COUNT"
+          
+          if [ $MANIFEST_COUNT -eq 0 ]; then
+            echo "警告: 未找到.manifest文件，编译可能未完成"
+          fi
 
       - name: Package firmware
         run: |
