@@ -54,8 +54,8 @@ jobs:
       #源码名称
       OC_SOURCE: ${{matrix.REPO_INFO.SOURCE}}
       #配置文件
-      OC_CONFIG: "${{ github.workspace }}/config/padavanonly/padavanonly.conf"
+      OC_CONFIG: "$GITHUB_WORKSPACE/config/padavanonly/padavanonly.conf"
       #脚本文件路径
-      OC_SCRIPTS: "${{ github.workspace }}/scripts/padavanonly"
+      OC_SCRIPTS: "$GITHUB_WORKSPACE/scripts/padavanonly"
       #插件调整
       OC_PACKAGE: ${{inputs.PACKAGE}}
