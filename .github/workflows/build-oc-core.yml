@@ -79,8 +79,43 @@ jobs:
           docker-images: true
           swap-storage: true
 
+      - name: Debug directory structure 1
+        run: |
+          echo "=== 当前目录结构 ==="
+          pwd
+          echo "=== 列出所有文件和目录 ==="
+          ls -la
+          echo "=== 检查 config 目录 ==="
+          ls -la config/ 2>/dev/null || echo "config 目录不存在"
+          echo "=== 检查配置文件是否存在 ==="
+          if [ -f "config/padavanonly/padavanonly.conf" ]; then
+            echo "配置文件存在: config/padavanonly/padavanonly.conf"
+          else
+            echo "配置文件不存在: config/padavanonly/padavanonly.conf"
+          fi
+          echo "=== OC_CONFIG 环境变量值 ==="
+          echo "OC_CONFIG = $OC_CONFIG"
+
+
       - name: Checkout projects
         uses: actions/checkout@main
+
+      - name: Debug directory structure 2
+        run: |
+          echo "=== 当前目录结构 ==="
+          pwd
+          echo "=== 列出所有文件和目录 ==="
+          ls -la
+          echo "=== 检查 config 目录 ==="
+          ls -la config/ 2>/dev/null || echo "config 目录不存在"
+          echo "=== 检查配置文件是否存在 ==="
+          if [ -f "config/padavanonly/padavanonly.conf" ]; then
+            echo "配置文件存在: config/padavanonly/padavanonly.conf"
+          else
+            echo "配置文件不存在: config/padavanonly/padavanonly.conf"
+          fi
+          echo "=== OC_CONFIG 环境变量值 ==="
+          echo "OC_CONFIG = $OC_CONFIG"
 
       - name: Initialization environment
         env:
@@ -101,6 +136,23 @@ jobs:
           sudo chown $USER:$USER /mnt/build_wrt
           sudo ln -s /mnt/build_wrt $GITHUB_WORKSPACE/wrt
 
+      - name: Debug directory structure 3
+        run: |
+          echo "=== 当前目录结构 ==="
+          pwd
+          echo "=== 列出所有文件和目录 ==="
+          ls -la
+          echo "=== 检查 config 目录 ==="
+          ls -la config/ 2>/dev/null || echo "config 目录不存在"
+          echo "=== 检查配置文件是否存在 ==="
+          if [ -f "config/padavanonly/padavanonly.conf" ]; then
+            echo "配置文件存在: config/padavanonly/padavanonly.conf"
+          else
+            echo "配置文件不存在: config/padavanonly/padavanonly.conf"
+          fi
+          echo "=== OC_CONFIG 环境变量值 ==="
+          echo "OC_CONFIG = $OC_CONFIG"
+
       - name: Initialization values
         run: |
           echo "OC_DATE=$(TZ=UTC-8 date +"%y.%m.%d-%H.%M.%S")" >> $GITHUB_ENV
@@ -110,6 +162,23 @@ jobs:
           # echo "OC_TARGET=$(grep -m 1 -oP '^CONFIG_TARGET_\K[\w]+(?=\=y)' "$OC_CONFIG")" >> $GITHUB_ENV
           echo "OC_KVER=none" >> $GITHUB_ENV
           echo "OC_LIST=none" >> $GITHUB_ENV
+
+      - name: Debug directory structure 4
+        run: |
+          echo "=== 当前目录结构 ==="
+          pwd
+          echo "=== 列出所有文件和目录 ==="
+          ls -la
+          echo "=== 检查 config 目录 ==="
+          ls -la config/ 2>/dev/null || echo "config 目录不存在"
+          echo "=== 检查配置文件是否存在 ==="
+          if [ -f "config/padavanonly/padavanonly.conf" ]; then
+            echo "配置文件存在: config/padavanonly/padavanonly.conf"
+          else
+            echo "配置文件不存在: config/padavanonly/padavanonly.conf"
+          fi
+          echo "=== OC_CONFIG 环境变量值 ==="
+          echo "OC_CONFIG = $OC_CONFIG"
 
       - name: Clone code
         run: |
