@@ -96,27 +96,9 @@ jobs:
           sudo bash -c 'bash <(curl -sL https://build-scripts.immortalwrt.org/init_build_environment.sh)'
           sudo -E systemctl daemon-reload
           sudo -E timedatectl set-timezone "Asia/Shanghai"
-
           sudo mkdir -p /mnt/build_wrt
           sudo chown $USER:$USER /mnt/build_wrt
           sudo ln -s /mnt/build_wrt $GITHUB_WORKSPACE/wrt
-
-      - name: Debug directory structure 1
-        run: |
-          echo "=== 当前目录结构 ==="
-          pwd
-          echo "=== 列出所有文件和目录 ==="
-          ls -la
-          echo "=== 检查 config 目录 ==="
-          ls -la config/ 2>/dev/null || echo "config 目录不存在"
-          echo "=== 检查配置文件是否存在 ==="
-          if [ -f "config/padavanonly/padavanonly.conf" ]; then
-            echo "配置文件存在: config/padavanonly/padavanonly.conf"
-          else
-            echo "配置文件不存在: config/padavanonly/padavanonly.conf"
-          fi
-          echo "=== OC_CONFIG 环境变量值 ==="
-          echo "OC_CONFIG = $OC_CONFIG"
 
       - name: Initialization values
         run: |
@@ -128,35 +110,15 @@ jobs:
           echo "OC_KVER=none" >> $GITHUB_ENV
           echo "OC_LIST=none" >> $GITHUB_ENV
 
-      - name: Debug directory structure 2
-        run: |
-          echo "=== 当前目录结构 ==="
-          pwd
-          echo "=== 列出所有文件和目录 ==="
-          ls -la
-          echo "=== 检查 config 目录 ==="
-          ls -la config/ 2>/dev/null || echo "config 目录不存在"
-          echo "=== 检查配置文件是否存在 ==="
-          if [ -f "config/padavanonly/padavanonly.conf" ]; then
-            echo "配置文件存在: config/padavanonly/padavanonly.conf"
-          else
-            echo "配置文件不存在: config/padavanonly/padavanonly.conf"
-          fi
-          echo "=== OC_CONFIG 环境变量值 ==="
-          echo "OC_CONFIG = $OC_CONFIG"
-
       - name: Clone code
         run: |
           git clone --depth=1 --single-branch --branch "$OC_BRANCH" "$OC_REPO" ./wrt/
-
           cd ./wrt/ && echo "OC_HASH=$(git log -1 --pretty=format:'%h')" >> $GITHUB_ENV
-
           # 如果不存在 defconfig 则直接结束工作流
           if [ ! -d "defconfig" ]; then
             echo "defconfig directory not found, stopping workflow."
             exit 0
           fi
-
           # GitHub Action 移除国内下载源
           PROJECT_MIRRORS_FILE="./scripts/projectsmirrors.json"
           if [ -f "$PROJECT_MIRRORS_FILE" ]; then
@@ -184,14 +146,11 @@ jobs:
             find "./wrt/staging_dir" -type d -name "stamp" -not -path "*target*" | while read -r DIR; do
               find "$DIR" -type f -exec touch {} +
             done
-
             mkdir -p ./wrt/tmp && echo "1" > ./wrt/tmp/.build
-
             echo "toolchain skiped done!"
           else
             echo "caches missed!"
           fi
-
           if ${{steps.check-cache.outputs.cache-hit != 'true'}}; then
             CACHE_LIST=$(gh cache list --key "$OC_CHIP"-"$OC_INFO" | cut -f 1)
             for CACHE_KEY in $CACHE_LIST; do
@@ -204,7 +163,6 @@ jobs:
       - name: Update feeds
         run: |
           cd ./wrt/
-
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
@@ -218,17 +176,13 @@ jobs:
       - name: Custom settings
         run: |
           cd ./wrt/
-
           cat $GITHUB_WORKSPACE/"$OC_CONFIG" >> .config
-
           $GITHUB_WORKSPACE/"$OC_SCRIPTS"/settings.sh
-
           make defconfig -j$(nproc) && make clean -j$(nproc)
 
       - name: Download packages
         run: |
           cd ./wrt/
-
           make download -j$(nproc)
 
       - name: Check disk space before compile firmware
@@ -239,13 +193,11 @@ jobs:
       - name: Compile firmware
         run: |
           cd ./wrt/
-
           make -j$(nproc) || make -j1 || make -j1 V=s
 
       - name: Machine information
         run: |
           cd ./wrt/
-
           echo "======================="
           lscpu | grep -E "name|Core|Thread"
           echo "======================="
@@ -257,9 +209,7 @@ jobs:
       - name: Package firmware
         run: |
           cd ./wrt/ && mkdir ./upload/
-
           cp -f ./.config ./upload/config-"$OC_CHIP"-"$OC_INFO"-"$OC_BRANCH"-"$OC_DATE".txt
-
           echo "OC_KVER=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^kernel - \K[\d\.]+' {} \;)" >> $GITHUB_ENV
           echo "OC_LIST=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^luci-(app|theme)[^ ]*' {} \; | tr '\n' ' ')" >> $GITHUB_ENV
           find ./bin/targets/ -iregex ".*\(buildinfo\|json\|sha256sums\|packages\)$" -exec rm -rf {} +
@@ -271,14 +221,6 @@ jobs:
           done
           find ./bin/targets/ -type f -exec mv -f {} ./upload/ \;
           make clean -j$(nproc)
-
-      #   将生成的固件暂存到Artifact中，并保留30天，避免因GitHub Release上传失败而丢失固件
-      # - name: Upload Firmware As Artifact
-      #   uses: actions/upload-artifact@main
-      #   with:
-      #     name: firmware-${{ env.OC_CHIP }}-${{ env.OC_INFO }}-${{ env.OC_BRANCH }}-${{ env.OC_DATE }}
-      #     path: ./wrt/upload/
-      #     retention-days: 90
 
       - name: Release firmware
         uses: softprops/action-gh-release@master
