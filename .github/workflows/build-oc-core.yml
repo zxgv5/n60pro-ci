@@ -156,7 +156,6 @@ jobs:
             for CACHE_KEY in $CACHE_LIST; do
               gh cache delete $CACHE_KEY
             done
-
             echo "caches cleanup done!"
           fi
 
@@ -169,7 +168,6 @@ jobs:
       - name: Custom packages
         run: |
           cd ./wrt/package/
-
           $GITHUB_WORKSPACE/"$OC_SCRIPTS"/packages.sh
           $GITHUB_WORKSPACE/"$OC_SCRIPTS"/handles.sh
 
