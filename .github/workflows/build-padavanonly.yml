@@ -29,7 +29,7 @@ jobs:
             }
 
     #调用公用编译核心build-oc-core.yml(oc表示OpenWRT和CloseWRT)
-    uses: "${{ github.repository }}/.github/workflows/build-oc-core.yml@${{ github.ref_name }}"
+    uses: "./.github/workflows/build-oc-core.yml"
     with:
       #编译配置
       OC_CHIP: ${{matrix.CHIP_CONFIG}}
