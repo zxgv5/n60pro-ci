@@ -201,8 +201,8 @@ jobs:
           tag_name: ${{ env.FILE_DATE }}-${{ env.LEDE_FIRMWARE_TAG }}
           files: |
             # ./openwrt/upload/openwrt-*.bin
-            ./openwrt/upload/*.bin
-            ./openwrt/upload/openwrt-*.manifest
+            ./openwrt/upload/*.*
+            # ./openwrt/upload/openwrt-*.manifest
           body: |
             源码：${{env.LEDE_REPO}}
             分支：${{env.LEDE_BRANCH}}
