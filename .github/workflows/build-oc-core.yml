@@ -236,20 +236,27 @@ jobs:
             echo "警告: 未找到.manifest文件，编译可能未完成"
           fi
 
+      # - name: Package firmware(may be have some problem)
+      #   run: |
+      #     cd ./wrt/ && mkdir ./upload/
+      #     cp -f ./.config ./upload/config-"$OC_CHIP"-"$OC_INFO"-"$OC_BRANCH"-"$OC_DATE".txt
+      #     echo "OC_KVER=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^kernel - \K[\d\.]+' {} \;)" >> $GITHUB_ENV
+      #     echo "OC_LIST=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^luci-(app|theme)[^ ]*' {} \; | tr '\n' ' ')" >> $GITHUB_ENV
+      #     find ./bin/targets/ -iregex ".*\(buildinfo\|json\|sha256sums\|packages\)$" -exec rm -rf {} +
+      #     for FILE in $(find ./bin/targets/ -type f -iname "*$OC_TARGET*") ; do
+      #       EXT=$(basename $FILE | cut -d '.' -f 2-)
+      #       NAME=$(basename $FILE | cut -d '.' -f 1 | grep -io "\(\"$OC_TARGET\"\).*")
+      #       NEW_FILE="$OC_INFO"-"$OC_BRANCH"-"$NAME"-"$OC_DATE"."$EXT"
+      #       mv -f $FILE ./upload/$NEW_FILE
+      #     done
+      #     find ./bin/targets/ -type f -exec mv -f {} ./upload/ \;
+      #     make clean -j$(nproc)
+
       - name: Package firmware
         run: |
           cd ./wrt/ && mkdir ./upload/
-          cp -f ./.config ./upload/config-"$OC_CHIP"-"$OC_INFO"-"$OC_BRANCH"-"$OC_DATE".txt
-          echo "OC_KVER=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^kernel - \K[\d\.]+' {} \;)" >> $GITHUB_ENV
-          echo "OC_LIST=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^luci-(app|theme)[^ ]*' {} \; | tr '\n' ' ')" >> $GITHUB_ENV
-          find ./bin/targets/ -iregex ".*\(buildinfo\|json\|sha256sums\|packages\)$" -exec rm -rf {} +
-          for FILE in $(find ./bin/targets/ -type f -iname "*$OC_TARGET*") ; do
-            EXT=$(basename $FILE | cut -d '.' -f 2-)
-            NAME=$(basename $FILE | cut -d '.' -f 1 | grep -io "\(\"$OC_TARGET\"\).*")
-            NEW_FILE="$OC_INFO"-"$OC_BRANCH"-"$NAME"-"$OC_DATE"."$EXT"
-            mv -f $FILE ./upload/$NEW_FILE
-          done
-          find ./bin/targets/ -type f -exec mv -f {} ./upload/ \;
+          mv -f ./bin/targets/*.manifest ./upload/*.manifest
+          mv -f ./bin/targets/*.bin ./upload/*.bin
           make clean -j$(nproc)
 
       - name: Release firmware
