@@ -255,8 +255,8 @@ jobs:
       - name: Package firmware
         run: |
           cd ./wrt/ && mkdir ./upload/
-          mv -f ./bin/targets/*.manifest ./upload/*.manifest
-          mv -f ./bin/targets/*.bin ./upload/*.bin
+          mv -f ./bin/targets/mediatek/filogic/*.manifest ./upload/*.manifest
+          mv -f ./bin/targets/mediatek/filogic/*.bin ./upload/*.bin
           make clean -j$(nproc)
 
       - name: Release firmware
