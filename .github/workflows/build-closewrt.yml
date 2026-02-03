@@ -1,4 +1,4 @@
-name: build-padavanonly
+name: build-closewrt
 
 on:
   workflow_dispatch:
@@ -46,7 +46,7 @@ jobs:
       #默认密码，仅作提示，修改无用
       OC_PW: 无
       #tag名
-      OC_TAG: padavanonly
+      OC_TAG: closewrt
       #源码链接
       OC_REPO: https://github.com/${{matrix.REPO_INFO.SOURCE}}.git
       #源码分支
@@ -54,8 +54,8 @@ jobs:
       #源码名称
       OC_SOURCE: ${{matrix.REPO_INFO.SOURCE}}
       #配置文件
-      OC_CONFIG: "config/padavanonly/padavanonly.conf"
+      OC_CONFIG: "config/closewrt/closewrt.conf"
       #脚本文件路径
-      OC_SCRIPTS: "scripts/padavanonly"
+      OC_SCRIPTS: "scripts/closewrt"
       #插件调整
       OC_PACKAGE: ${{inputs.PACKAGE}}

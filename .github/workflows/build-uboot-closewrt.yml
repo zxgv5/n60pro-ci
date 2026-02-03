@@ -1,4 +1,4 @@
-name: build-uboot-padavanonly-lede
+name: build-uboot-closewrt
 
 on:
   repository_dispatch:
@@ -128,7 +128,7 @@ jobs:
         uses: softprops/action-gh-release@master
         with:
           #tag_name: ${{env.WRT_AUTHOR}}_${{env.WRT_VER}}_${{env.WRT_DATE}}
-          tag_name: ${{env.WRT_DATE}}-uboot-padavanonly-lede
+          tag_name: ${{env.WRT_DATE}}-uboot-closewrt
           files: |
             ./wrt/upload/mt7986_netcore_n60-pro-*.bin
             ./wrt/upload/*.zip
