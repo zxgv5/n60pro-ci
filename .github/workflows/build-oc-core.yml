@@ -86,6 +86,8 @@ jobs:
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
+          sudo apt purge google-cloud-cli -y 2>/dev/null || sudo dpkg --purge --force-all google-cloud-cli
+          sudo apt --fix-broken install -y
           sudo -E apt -yqq purge firefox
           sudo -E apt -yqq update
           sudo -E apt -yqq full-upgrade
