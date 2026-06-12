@@ -86,29 +86,54 @@ jobs:
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
-          # 1. 强制移除损坏的 google-cloud-cli 记录（不执行脚本）
-          sudo dpkg --remove --force-remove-essential --force-remove-reinstreq google-cloud-cli || true
+          # 1. 【强力修复】彻底移除损坏的 google-cloud-cli
+          # 使用 --force-all 忽略所有依赖和脚本错误，直接从数据库删除记录
+          echo "🔧 强制移除 google-cloud-cli 残留..."
+          sudo dpkg --remove --force-all google-cloud-cli 2>/dev/null || true
           
-          # 2. 现在可以安全地清理其他包了
+          # 2. 清理并更新系统
+          echo "🧹 清理系统缓存..."
           sudo -E apt -yqq purge firefox
           sudo -E apt -yqq update
           sudo -E apt -yqq full-upgrade
           sudo -E apt -yqq autoremove --purge
-          sudo -E apt -yqq autoclean
           sudo -E apt -yqq clean
           
-          # 3. 安装必要的编译依赖
-          sudo -E apt -yqq install dos2unix libfuse-dev
-          
-          # 4. 执行原始的环境初始化脚本
-          sudo bash -c 'bash <(curl -sL https://build-scripts.immortalwrt.org/init_build_environment.sh)'
-          
-          # 5. 其余配置
+          # 3. 【替代方案】安装编译依赖
+          # 由于官方脚本 init_build_environment.sh 已 404，这里直接列出常用依赖
+          # 如果你需要特定版本的库，请根据你的源码要求调整
+          echo "📦 安装编译依赖..."
+          sudo -E apt -yqq install \
+            build-essential \
+            chrpath \
+            diffstat \
+            gawk \
+            git \
+            libelf-dev \
+            libncurses5-dev \
+            libssl-dev \
+            python3 \
+            python3-distutils \
+            python3-setuptools \
+            python3-pyelftools \
+            rsync \
+            unzip \
+            vim-common \
+            wget \
+            dos2unix \
+            libfuse-dev \
+            ccache \
+            liblzma-dev \
+            zlib1g-dev
+            
+          # 4. 其余配置
+          echo "⚙️  配置系统环境..."
           sudo -E systemctl daemon-reload
           sudo -E timedatectl set-timezone "Asia/Shanghai"
           sudo mkdir -p /mnt/build_wrt
           sudo chown $USER:$USER /mnt/build_wrt
           sudo ln -s /mnt/build_wrt $GITHUB_WORKSPACE/wrt
+
  
       - name: Initialization values
         run: |
