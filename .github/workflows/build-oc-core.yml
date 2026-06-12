@@ -86,20 +86,28 @@ jobs:
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
-          # 1. 【极致清理】只保留最基础的系统，移除可能冲突的软件（如firefox）
-          # 不再触碰 google-cloud-cli，直接忽略它
-          echo "🧹 极致清理系统缓存..."
-          sudo -E apt -yqq purge firefox || true
-          sudo -E apt -yqq autoremove --purge
-          sudo -E apt -yqq clean
+          # 1. 【外科手术】直接从数据库中抹除 google-cloud-cli 及其配置脚本
+          # 这是解决 "postinst not found" 错误的唯一根本方法
+          echo "🔪 执行 dpkg 数据库外科手术..."
+          # 删除包的状态记录，并忽略错误
+          sudo sed -i '/^Package: google-cloud-cli$/,/^$/d' /var/lib/dpkg/status || true
+          # 删除该包的所有控制脚本文件（防止触发）
+          sudo rm -rf /var/lib/dpkg/info/google-cloud-cli.* || true
           
-          # 2. 【更新源】确保软件源是最新的
+          # 2. 【清理】清理系统缓存
+          echo "🧹 清理系统缓存..."
+          # 强制重新配置所有未完成的包（此时已无 google-cloud-cli 搞鬼）
+          sudo dpkg --configure -a --force-confold
+          sudo -E apt -yqq purge firefox || true
+          sudo -E apt -yqq autoclean
+          sudo -E apt -yqq autoremove --purge
+          
+          # 3. 【更新】更新软件源
           echo "🔄 更新软件源..."
           sudo -E apt -yqq update
           
-          # 3. 【安装依赖】严格按照 ImmortalWrt 官方文档推荐的列表安装
-          # 参考文档：https://github.com/padavanonly/immortalwrt-mt798x-6.6
-          echo "📦 安装编译依赖（Debian 11 推荐列表）..."
+          # 4. 【安装依赖】安装编译依赖 (基于文档推荐列表)
+          echo "📦 安装编译依赖..."
           sudo -E apt -yqq install \
             ack \
             antlr3 \
@@ -179,12 +187,12 @@ jobs:
             zlib1g-dev \
             zstd
             
-          # 4. 【系统配置】配置时区和构建目录
+          # 5. 【配置】配置系统环境
           echo "🔧 配置系统环境..."
           sudo -E systemctl daemon-reload
           sudo -E timedatectl set-timezone "Asia/Shanghai"
           
-          # 5. 【创建工作区】
+          # 6. 【工作区】创建工作区
           sudo mkdir -p /mnt/build_wrt
           sudo chown $USER:$USER /mnt/build_wrt
           sudo ln -s /mnt/build_wrt $GITHUB_WORKSPACE/wrt
