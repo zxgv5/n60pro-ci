@@ -86,15 +86,24 @@ jobs:
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
-          sudo -E apt -yqq purge firefox google-cloud-cli
+          # 1. 强制移除损坏的 google-cloud-cli 记录（不执行脚本）
+          sudo dpkg --remove --force-remove-essential --force-remove-reinstreq google-cloud-cli || true
+          
+          # 2. 现在可以安全地清理其他包了
+          sudo -E apt -yqq purge firefox
           sudo -E apt -yqq update
           sudo -E apt -yqq full-upgrade
           sudo -E apt -yqq autoremove --purge
           sudo -E apt -yqq autoclean
           sudo -E apt -yqq clean
+          
+          # 3. 安装必要的编译依赖
           sudo -E apt -yqq install dos2unix libfuse-dev
-          # ... 剩余命令保持不变
+          
+          # 4. 执行原始的环境初始化脚本
           sudo bash -c 'bash <(curl -sL https://build-scripts.immortalwrt.org/init_build_environment.sh)'
+          
+          # 5. 其余配置
           sudo -E systemctl daemon-reload
           sudo -E timedatectl set-timezone "Asia/Shanghai"
           sudo mkdir -p /mnt/build_wrt
