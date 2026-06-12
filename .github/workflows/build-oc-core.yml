@@ -86,53 +86,105 @@ jobs:
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
-          # 1. 【欺骗修复】防止 postinst 脚本因找不到 gcloud 而崩溃
-          # 创建一个空的 gcloud 命令占位符，让配置脚本执行成功
-          echo "🔧 创建 gcloud 占位符..."
-          echo '#!/bin/bash' | sudo tee /usr/bin/gcloud > /dev/null
-          sudo chmod +x /usr/bin/gcloud
-          
-          # 2. 【强力移除】现在可以安全地移除损坏的包了
-          echo "🧹 强制移除 google-cloud-cli 残留..."
-          sudo dpkg --remove --force-remove-essential --force-remove-reinstreq google-cloud-cli || true
-          
-          # 3. 清理并更新系统
-          echo "📦 清理系统缓存..."
-          sudo -E apt -yqq purge firefox
-          sudo -E apt -yqq update
-          sudo -E apt -yqq full-upgrade
+          # 1. 【极致清理】只保留最基础的系统，移除可能冲突的软件（如firefox）
+          # 不再触碰 google-cloud-cli，直接忽略它
+          echo "🧹 极致清理系统缓存..."
+          sudo -E apt -yqq purge firefox || true
           sudo -E apt -yqq autoremove --purge
           sudo -E apt -yqq clean
           
-          # 4. 安装编译依赖 (直接列出，避免使用已失效的官方脚本)
-          echo "⚙️  安装编译依赖..."
+          # 2. 【更新源】确保软件源是最新的
+          echo "🔄 更新软件源..."
+          sudo -E apt -yqq update
+          
+          # 3. 【安装依赖】严格按照 ImmortalWrt 官方文档推荐的列表安装
+          # 参考文档：https://github.com/padavanonly/immortalwrt-mt798x-6.6
+          echo "📦 安装编译依赖（Debian 11 推荐列表）..."
           sudo -E apt -yqq install \
+            ack \
+            antlr3 \
+            asciidoc \
+            autoconf \
+            automake \
+            autopoint \
+            binutils \
+            bison \
             build-essential \
-            chrpath \
-            diffstat \
-            gawk \
-            git \
-            libelf-dev \
-            libncurses5-dev \
-            libssl-dev \
-            python3 \
-            python3-distutils \
-            python3-setuptools \
-            python3-pyelftools \
-            rsync \
-            unzip \
-            vim-common \
-            wget \
-            dos2unix \
-            libfuse-dev \
+            bzip2 \
             ccache \
-            liblzma-dev \
-            zlib1g-dev
+            clang \
+            cmake \
+            cpio \
+            curl \
+            device-tree-compiler \
+            ecj \
+            fastjar \
+            flex \
+            g++-multilib \
+            gawk \
+            gcc-multilib \
+            gettext \
+            git \
+            gnutls-dev \
+            gperf \
+            haveged \
+            help2man \
+            intltool \
+            libc6-dev-i386 \
+            lib32gcc-s1 \
+            libelf-dev \
+            libglib2.0-dev \
+            libgmp3-dev \
+            libltdl-dev \
+            libmpc-dev \
+            libmpfr-dev \
+            libncurses-dev \
+            libpython3-dev \
+            libreadline-dev \
+            libssl-dev \
+            libtool \
+            libyaml-dev \
+            libz-dev \
+            lld \
+            llvm \
+            lrzsz \
+            mkisofs \
+            msmtp \
+            nano \
+            ninja-build \
+            p7zip \
+            p7zip-full \
+            patch \
+            pkgconf \
+            python3 \
+            python3-pip \
+            python3-ply \
+            python3-docutils \
+            python3-pyelftools \
+            qemu-utils \
+            re2c \
+            rsync \
+            scons \
+            squashfs-tools \
+            subversion \
+            swig \
+            texinfo \
+            uglifyjs \
+            upx-ucl \
+            unzip \
+            vim \
+            wget \
+            xmlto \
+            xxd \
+            zlib1g-dev \
+            zstd
             
-          # 5. 其余配置
+          # 4. 【系统配置】配置时区和构建目录
           echo "🔧 配置系统环境..."
           sudo -E systemctl daemon-reload
           sudo -E timedatectl set-timezone "Asia/Shanghai"
+          
+          # 5. 【创建工作区】
           sudo mkdir -p /mnt/build_wrt
           sudo chown $USER:$USER /mnt/build_wrt
           sudo ln -s /mnt/build_wrt $GITHUB_WORKSPACE/wrt
