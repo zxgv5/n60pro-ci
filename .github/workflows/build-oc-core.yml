@@ -125,6 +125,7 @@ jobs:
             cpio \
             curl \
             device-tree-compiler \
+            dos2unix ＼
             ecj \
             fastjar \
             flex \
