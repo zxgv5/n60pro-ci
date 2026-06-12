@@ -1,5 +1,5 @@
 name: build-oc-core
-
+ 
 on:
   workflow_call:
     inputs:
@@ -61,7 +61,7 @@ env:
   OC_CONFIG: ${{inputs.OC_CONFIG}}
   OC_SCRIPTS: ${{inputs.OC_SCRIPTS}}
   OC_PACKAGE: ${{inputs.OC_PACKAGE}}
-
+ 
 jobs:
   core:
     name: ${{inputs.OC_SOURCE}}
@@ -78,31 +78,28 @@ jobs:
           large-packages: true
           docker-images: true
           swap-storage: true
-
+ 
       - name: Checkout projects
         uses: actions/checkout@main
-
+ 
       - name: Initialization environment
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
-          sudo -E apt -yqq purge firefox google-cloud-cli
-          sudo -E apt -yqq update
-          sudo -E apt -yqq full-upgrade
           sudo -E apt -yqq purge firefox
           sudo -E apt -yqq update
           sudo -E apt -yqq full-upgrade
           sudo -E apt -yqq autoremove --purge
           sudo -E apt -yqq autoclean
           sudo -E apt -yqq clean
-          sudo -E apt -yqq install dos2unix python3-netifaces libfuse-dev
+          sudo -E apt -yqq install dos2unix libfuse-dev
           sudo bash -c 'bash <(curl -sL https://build-scripts.immortalwrt.org/init_build_environment.sh)'
           sudo -E systemctl daemon-reload
           sudo -E timedatectl set-timezone "Asia/Shanghai"
           sudo mkdir -p /mnt/build_wrt
           sudo chown $USER:$USER /mnt/build_wrt
           sudo ln -s /mnt/build_wrt $GITHUB_WORKSPACE/wrt
-
+ 
       - name: Initialization values
         run: |
           echo "OC_DATE=$(TZ=UTC-8 date +"%y.%m.%d-%H.%M.%S")" >> $GITHUB_ENV
@@ -112,7 +109,7 @@ jobs:
           echo "OC_TARGET=$(grep -m 1 -oP '^CONFIG_TARGET_\K[\w]+(?=\=y)' "$OC_CONFIG")" >> $GITHUB_ENV
           echo "OC_KVER=none" >> $GITHUB_ENV
           echo "OC_LIST=none" >> $GITHUB_ENV
-
+ 
       - name: Clone code
         run: |
           git clone --depth=1 --single-branch --branch "$OC_BRANCH" "$OC_REPO" ./wrt/
@@ -127,11 +124,11 @@ jobs:
           if [ -f "$PROJECT_MIRRORS_FILE" ]; then
             sed -i '/.cn\//d; /tencent/d; /aliyun/d' "$PROJECT_MIRRORS_FILE"
           fi
-
+ 
       - name: Check scripts
         run: |
           find ./ -maxdepth 4 -type f -iregex ".*\(txt\|sh\)$" -exec dos2unix {} \; -exec chmod +x {} \;
-
+ 
       - name: Check caches
         id: check-cache
         uses: actions/cache@main
@@ -142,7 +139,7 @@ jobs:
             ./wrt/.ccache
             ./wrt/staging_dir/host*
             ./wrt/staging_dir/tool*
-
+ 
       - name: Update caches
         run: |
           if [ -d "./wrt/staging_dir" ]; then
@@ -161,41 +158,41 @@ jobs:
             done
             echo "caches cleanup done!"
           fi
-
+ 
       - name: Update feeds
         run: |
           cd ./wrt/
           ./scripts/feeds update -a
           ./scripts/feeds install -a
-
+ 
       - name: Custom packages
         run: |
           cd ./wrt/package/
           $GITHUB_WORKSPACE/"$OC_SCRIPTS"/packages.sh
           $GITHUB_WORKSPACE/"$OC_SCRIPTS"/handles.sh
-
+ 
       - name: Custom settings
         run: |
           cd ./wrt/
           cat $GITHUB_WORKSPACE/"$OC_CONFIG" >> .config
           $GITHUB_WORKSPACE/"$OC_SCRIPTS"/settings.sh
           make defconfig -j$(nproc) && make clean -j$(nproc)
-
+ 
       - name: Download packages
         run: |
           cd ./wrt/
           make download -j$(nproc)
-
+ 
       - name: Check disk space before compile firmware
         run: |
           echo "=== Disk Space Before Compile Firmware ==="
           df -h
-
+ 
       - name: Compile firmware
         run: |
           cd ./wrt/
           make -j$(nproc) || make -j1 || make -j1 V=s
-
+ 
       - name: Machine information
         run: |
           cd ./wrt/
@@ -212,7 +209,7 @@ jobs:
           du -sh ./bin/ 2>/dev/null || echo "bin目录不存在"
           echo "build_dir目录大小:"
           du -sh ./build_dir/ 2>/dev/null || echo "build_dir目录不存在"
-
+ 
       - name: Verify compilation completed
         run: |
           cd ./wrt/
@@ -238,7 +235,7 @@ jobs:
           if [ $MANIFEST_COUNT -eq 0 ]; then
             echo "警告: 未找到.manifest文件，编译可能未完成"
           fi
-
+ 
       # - name: Package firmware(may be have some problem)
       #   run: |
       #     cd ./wrt/ && mkdir ./upload/
@@ -254,14 +251,14 @@ jobs:
       #     done
       #     find ./bin/targets/ -type f -exec mv -f {} ./upload/ \;
       #     make clean -j$(nproc)
-
+ 
       - name: Package firmware
         run: |
           cd ./wrt/ && mkdir ./upload/
           mv -f ./bin/targets/mediatek/filogic/*.manifest ./upload/ 2>/dev/null || echo "没有.manifest文件"
           mv -f ./bin/targets/mediatek/filogic/*.bin ./upload/ 2>/dev/null || echo "没有.bin文件"
           make clean -j$(nproc)
-
+ 
       - name: Release firmware
         uses: softprops/action-gh-release@master
         with:
@@ -278,15 +275,15 @@ jobs:
             源码：${{env.OC_REPO}}
             分支：${{env.OC_BRANCH}}
             提交：${{env.OC_HASH}}
-
+ 
             配置：${{env.OC_CHIP}}
             平台：${{env.OC_TARGET}}
-
+ 
             登录地址：${{env.OC_IP}}
             登录密码：${{env.OC_PW}}
-
+ 
             WIFI名称：${{env.OC_SSID}}
             WIFI密码：${{env.OC_WORD}}
-
+ 
             内核版本：${{env.OC_KVER}}
             插件列表：${{env.OC_LIST}}
