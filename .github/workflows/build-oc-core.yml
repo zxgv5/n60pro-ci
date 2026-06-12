@@ -86,23 +86,26 @@ jobs:
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
-          # 1. 【强力修复】彻底移除损坏的 google-cloud-cli
-          # 使用 --force-all 忽略所有依赖和脚本错误，直接从数据库删除记录
-          echo "🔧 强制移除 google-cloud-cli 残留..."
-          sudo dpkg --remove --force-all google-cloud-cli 2>/dev/null || true
+          # 1. 【欺骗修复】防止 postinst 脚本因找不到 gcloud 而崩溃
+          # 创建一个空的 gcloud 命令占位符，让配置脚本执行成功
+          echo "🔧 创建 gcloud 占位符..."
+          echo '#!/bin/bash' | sudo tee /usr/bin/gcloud > /dev/null
+          sudo chmod +x /usr/bin/gcloud
           
-          # 2. 清理并更新系统
-          echo "🧹 清理系统缓存..."
+          # 2. 【强力移除】现在可以安全地移除损坏的包了
+          echo "🧹 强制移除 google-cloud-cli 残留..."
+          sudo dpkg --remove --force-remove-essential --force-remove-reinstreq google-cloud-cli || true
+          
+          # 3. 清理并更新系统
+          echo "📦 清理系统缓存..."
           sudo -E apt -yqq purge firefox
           sudo -E apt -yqq update
           sudo -E apt -yqq full-upgrade
           sudo -E apt -yqq autoremove --purge
           sudo -E apt -yqq clean
           
-          # 3. 【替代方案】安装编译依赖
-          # 由于官方脚本 init_build_environment.sh 已 404，这里直接列出常用依赖
-          # 如果你需要特定版本的库，请根据你的源码要求调整
-          echo "📦 安装编译依赖..."
+          # 4. 安装编译依赖 (直接列出，避免使用已失效的官方脚本)
+          echo "⚙️  安装编译依赖..."
           sudo -E apt -yqq install \
             build-essential \
             chrpath \
@@ -126,14 +129,13 @@ jobs:
             liblzma-dev \
             zlib1g-dev
             
-          # 4. 其余配置
-          echo "⚙️  配置系统环境..."
+          # 5. 其余配置
+          echo "🔧 配置系统环境..."
           sudo -E systemctl daemon-reload
           sudo -E timedatectl set-timezone "Asia/Shanghai"
           sudo mkdir -p /mnt/build_wrt
           sudo chown $USER:$USER /mnt/build_wrt
           sudo ln -s /mnt/build_wrt $GITHUB_WORKSPACE/wrt
-
  
       - name: Initialization values
         run: |
