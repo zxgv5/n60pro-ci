@@ -1,5 +1,5 @@
 name: build-oc-core
- 
+
 on:
   workflow_call:
     inputs:
@@ -61,7 +61,7 @@ env:
   OC_CONFIG: ${{inputs.OC_CONFIG}}
   OC_SCRIPTS: ${{inputs.OC_SCRIPTS}}
   OC_PACKAGE: ${{inputs.OC_PACKAGE}}
- 
+
 jobs:
   core:
     name: ${{inputs.OC_SOURCE}}
@@ -78,122 +78,45 @@ jobs:
           large-packages: true
           docker-images: true
           swap-storage: true
- 
+
       - name: Checkout projects
         uses: actions/checkout@main
- 
+
       - name: Initialization environment
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
-          # 1. 【外科手术】直接从数据库中抹除 google-cloud-cli 及其配置脚本
-          # 这是解决 "postinst not found" 错误的唯一根本方法
-          echo "🔪 执行 dpkg 数据库外科手术..."
-          # 删除包的状态记录，并忽略错误
+          echo "🔪 执行 dpkg 数据库修复..."
           sudo sed -i '/^Package: google-cloud-cli$/,/^$/d' /var/lib/dpkg/status || true
-          # 删除该包的所有控制脚本文件（防止触发）
           sudo rm -rf /var/lib/dpkg/info/google-cloud-cli.* || true
-          
-          # 2. 【清理】清理系统缓存
           echo "🧹 清理系统缓存..."
-          # 强制重新配置所有未完成的包（此时已无 google-cloud-cli 搞鬼）
           sudo dpkg --configure -a --force-confold
           sudo -E apt -yqq purge firefox || true
           sudo -E apt -yqq autoclean
           sudo -E apt -yqq autoremove --purge
-          
-          # 3. 【更新】更新软件源
           echo "🔄 更新软件源..."
           sudo -E apt -yqq update
-          
-          # 4. 【安装依赖】安装编译依赖 (基于文档推荐列表)
           echo "📦 安装编译依赖..."
           sudo -E apt -yqq install \
-            ack \
-            antlr3 \
-            asciidoc \
-            autoconf \
-            automake \
-            autopoint \
-            binutils \
-            bison \
-            build-essential \
-            bzip2 \
-            ccache \
-            clang \
-            cmake \
-            cpio \
-            curl \
-            device-tree-compiler \
-            dos2unix \
-            ecj \
-            fastjar \
-            flex \
-            g++-multilib \
-            gawk \
-            gcc-multilib \
-            gettext \
-            git \
-            gnutls-dev \
-            gperf \
-            haveged \
-            help2man \
-            intltool \
-            libc6-dev-i386 \
-            lib32gcc-s1 \
-            libelf-dev \
-            libglib2.0-dev \
-            libgmp3-dev \
-            libltdl-dev \
-            libmpc-dev \
-            libmpfr-dev \
-            libncurses-dev \
-            libpython3-dev \
-            libreadline-dev \
-            libssl-dev \
-            libtool \
-            libyaml-dev \
-            libz-dev \
-            lld \
-            llvm \
-            lrzsz \
-            mkisofs \
-            msmtp \
-            nano \
-            ninja-build \
-            p7zip \
-            p7zip-full \
-            patch \
-            pkgconf \
-            python3 \
-            python3-pip \
-            python3-ply \
-            python3-docutils \
-            python3-pyelftools \
-            qemu-utils \
-            re2c \
-            rsync \
-            scons \
-            squashfs-tools \
-            subversion \
-            swig \
-            texinfo \
-            uglifyjs \
-            upx-ucl \
-            unzip \
-            vim \
-            wget \
-            xmlto \
-            xxd \
-            zlib1g-dev \
-            zstd
-            
-          # 5. 【配置】配置系统环境
+            ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2
+          sudo -E apt -yqq install \
+            ccache clang cmake cpio curl device-tree-compiler dos2unix ecj fastjar flex
+          sudo -E apt -yqq install \
+            g++-multilib gawk gcc-multilib gettext git gnutls-dev gperf help2man intltool
+          sudo -E apt -yqq install \
+            libc6-dev-i386 lib32gcc-s1 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev
+          sudo -E apt -yqq install \
+            libmpfr-dev libncurses-dev libpython3-dev libreadline-dev libssl-dev libtool libyaml-dev
+          sudo -E apt -yqq install \
+            libz-dev lld llvm lrzsz mkisofs msmtp nano ninja-build p7zip p7zip-full patch
+          sudo -E apt -yqq install \
+            pkgconf python3 python3-pip python3-ply python3-docutils python3-pyelftools qemu-utils
+          sudo -E apt -yqq install \
+            re2c rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget
+          sudo -E apt -yqq install xmlto xxd zlib1g-dev zstd
           echo "🔧 配置系统环境..."
           sudo -E systemctl daemon-reload
           sudo -E timedatectl set-timezone "Asia/Shanghai"
-          
-          # 6. 【工作区】创建工作区
           sudo mkdir -p /mnt/build_wrt
           sudo chown $USER:$USER /mnt/build_wrt
           sudo ln -s /mnt/build_wrt $GITHUB_WORKSPACE/wrt
@@ -349,7 +272,7 @@ jobs:
       #     done
       #     find ./bin/targets/ -type f -exec mv -f {} ./upload/ \;
       #     make clean -j$(nproc)
- 
+
       - name: Package firmware
         run: |
           cd ./wrt/ && mkdir ./upload/
@@ -376,12 +299,12 @@ jobs:
  
             配置：${{env.OC_CHIP}}
             平台：${{env.OC_TARGET}}
- 
+
             登录地址：${{env.OC_IP}}
             登录密码：${{env.OC_PW}}
- 
+
             WIFI名称：${{env.OC_SSID}}
             WIFI密码：${{env.OC_WORD}}
- 
+
             内核版本：${{env.OC_KVER}}
             插件列表：${{env.OC_LIST}}
