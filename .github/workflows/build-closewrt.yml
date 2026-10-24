@@ -23,10 +23,8 @@ jobs:
       matrix:
         CHIP_CONFIG: [MT7986]
         REPO_INFO:
-          - {
-              SOURCE: "padavanonly/immortalwrt-mt798x-6.6",
-              BRANCH: "openwrt-24.10-6.6",
-            }
+          # - {SOURCE: "padavanonly/immortalwrt-mt798x-6.6", BRANCH: "openwrt-24.10-6.6",}
+          - {SOURCE: "Yuzhii0718/immortalwrt-mt798x-6.6-padavanonly", BRANCH: "openwrt-24.10-6.6"}
 
     #调用公用编译核心build-oc-core.yml(oc表示OpenWRT和CloseWRT)
     uses: "./.github/workflows/build-oc-core.yml"
